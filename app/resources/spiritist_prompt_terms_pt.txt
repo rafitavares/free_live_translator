@@ -1,0 +1,41 @@
+# categoria|prioridade|termo
+#
+# Termos que orientam o Whisper em palestras espíritas em português.
+# As categorias reaproveitam os pesos do Church Cap:
+#   theology = doutrina, biblical_names = nomes, bible_books_places = obras,
+#   christian_phrases = expressões.
+theology|100|perispírito
+theology|98|desobsessão
+theology|96|reencarnação
+theology|94|mediunidade
+theology|92|obsessão
+theology|90|desencarnação
+theology|88|livre-arbítrio
+theology|86|fluidoterapia
+theology|84|psicografia
+theology|82|psicofonia
+theology|80|passe
+theology|78|Codificação
+theology|76|Doutrina Espírita
+theology|74|plano espiritual
+biblical_names|100|Allan Kardec
+biblical_names|98|Chico Xavier
+biblical_names|96|Emmanuel
+biblical_names|94|André Luiz
+biblical_names|92|Joanna de Ângelis
+biblical_names|90|Bezerra de Menezes
+biblical_names|88|Divaldo Franco
+biblical_names|86|Léon Denis
+biblical_names|84|Jesus
+biblical_names|82|Herculano Pires
+biblical_names|80|Gabriel Delanne
+bible_books_places|100|O Livro dos Espíritos
+bible_books_places|98|O Evangelho Segundo o Espiritismo
+bible_books_places|96|O Livro dos Médiuns
+bible_books_places|94|O Céu e o Inferno
+bible_books_places|92|A Gênese
+bible_books_places|90|Revista Espírita
+bible_books_places|88|Nosso Lar
+christian_phrases|100|Fora da caridade não há salvação
+christian_phrases|98|evangelho no lar
+christian_phrases|96|prece

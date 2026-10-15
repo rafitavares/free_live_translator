@@ -7,6 +7,8 @@ behaviour while keeping the standard transcription path available as a fallback.
 """
 from __future__ import annotations
 
+from app.source_language import SOURCE_LANGUAGE, whisper_model_for_source
+
 import asyncio
 import time
 import difflib
@@ -44,10 +46,10 @@ from app.transcription.streaming_words import (
 class FasterWhisperTranscriber(AudioStreamWatchdog, Transcriber):
     def __init__(
         self,
-        model_name: str = "base.en",
+        model_name: str = "base",
         device: str = "auto",
         compute_type: str = "auto",
-        language: str = "en",
+        language: str = SOURCE_LANGUAGE,
         audio_device: str | int | None = None,
         sample_rate: int = 16000,
         chunk_seconds: int = 2,
@@ -63,7 +65,7 @@ class FasterWhisperTranscriber(AudioStreamWatchdog, Transcriber):
         committed_audio_overlap_seconds: float = 1.0,
         hotwords: str | None = None,
     ):
-        self.model_name = model_name
+        self.model_name = whisper_model_for_source(model_name, language)
         self.requested_device = device
         self.requested_compute_type = compute_type
         self.hardware_status = detect_hardware_acceleration()

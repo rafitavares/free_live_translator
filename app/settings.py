@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     public_base_url: str | None = None
 
     transcriber_mode: str = "whisper"
-    whisper_model: str = "base.en"
+    whisper_model: str = "base"  # multilíngue; ".en" é trocado automaticamente quando a origem não é inglês
     whisper_device: str = "auto"
     whisper_compute_type: str = "auto"
     whisper_beam_size: int = 5
@@ -41,13 +41,14 @@ class Settings(BaseSettings):
     stream_edge_guard_seconds: float = 0.32
     stream_edge_confidence_threshold: float = 0.65
     stream_committed_audio_overlap_seconds: float = 1.0
-    whisper_initial_prompt: str = "Church service audio with prayer, Bible readings, worship, sermon, Scripture, Jesus Christ, Holy Spirit, Psalm, Psalms, Ephesians, Corinthians, Thessalonians."
+    # Vazio = usa o prompt padrão da língua de origem (ver app/source_language.py).
+    whisper_initial_prompt: str = ""
 
     # Optional local translation scaffolding. Provider/language settings are prepared
     # by default, but the operator must explicitly enable translated captions in the web UI.
     translation_enabled: bool = False
     translation_provider: str = "argos"  # argos, ct2small100, small100, both, demo; disabled is also accepted
-    translation_allowed_languages: str = "en"
+    translation_allowed_languages: str = ""  # vazio = só a língua de origem
     translation_max_active_languages: int = 2
     translation_queue_capacity_per_language: int = 8
 

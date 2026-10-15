@@ -94,7 +94,7 @@ class CaptionHub:
     def translation_queue_capacity_per_language(self) -> int:
         return self._translation_scheduler.capacity_per_language
 
-    async def connect(self, websocket: WebSocket, language: str = "en", count_viewer: bool = True) -> None:
+    async def connect(self, websocket: WebSocket, language: str = SOURCE_LANGUAGE, count_viewer: bool = True) -> None:
         await websocket.accept()
         language = normalise_language(language)
         async with self._lock:
@@ -281,7 +281,7 @@ class CaptionHub:
 
     def _translate_segment_for_language(self, segment: CaptionSegment, language: str) -> CaptionSegment:
         language = normalise_language(language)
-        if language == "en":
+        if language == SOURCE_LANGUAGE:
             return segment
         if self.translation_language_policy == "restricted" and language not in self.translation_allowed_languages:
             return segment.model_copy(update={"text": segment.text, "raw_text": segment.raw_text or segment.text})
@@ -306,7 +306,7 @@ class CaptionHub:
         )
 
     def state(self) -> CaptionState:
-        return self._state_for_language("en")
+        return self._state_for_language(SOURCE_LANGUAGE)
 
     @staticmethod
     def _normalise_for_duplicate(text: str) -> str:
@@ -751,7 +751,7 @@ class CaptionHub:
         *,
         source_ready_monotonic: float | None = None,
     ) -> None:
-        languages = list(dict.fromkeys(normalise_language(language) for language in languages if normalise_language(language) != "en"))
+        languages = list(dict.fromkeys(normalise_language(language) for language in languages if normalise_language(language) != SOURCE_LANGUAGE))
         if not languages:
             return
         record_translation_batch(
@@ -1087,7 +1087,7 @@ class CaptionHub:
         languages_to_translate: list[str] = []
 
         for lang, sockets in clients_by_language.items():
-            if lang == "en":
+            if lang == SOURCE_LANGUAGE:
                 payload = self._caption_payload(
                     segment,
                     language=lang,

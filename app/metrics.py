@@ -234,7 +234,7 @@ _CONFIGURATION_FIELDS = {
 
 _SAFE_ENUMS = {
     "transcriber_mode": {"whisper", "faster_whisper"},
-    "whisper_model": {"tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large", "large-v2", "large-v3"},
+    "whisper_model": {"tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large", "large-v2", "large-v3", "large-v3-turbo"},
     "whisper_device_requested": {"auto", "cpu", "cuda", "mps"},
     "whisper_compute_type_requested": {"auto", "int8", "int8_float16", "float16", "float32", "fp16", "fp32"},
     "translation_provider": {"disabled", "argos", "both", "ct2small100", "small100", "demo"},

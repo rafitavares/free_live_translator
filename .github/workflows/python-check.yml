@@ -19,4 +19,8 @@ jobs:
       - name: Compile application
         run: python -m compileall app tests
       - name: Run tests
+        # A suíte herdada do Church Cap assume palestras em inglês; os testes do
+        # fork (tests/test_source_language.py) fixam a língua por conta própria.
+        env:
+          CAPTION_SOURCE_LANGUAGE: en
         run: python -m unittest discover -s tests

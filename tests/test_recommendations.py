@@ -22,7 +22,7 @@ class RecommendationSourceTests(unittest.TestCase):
     def test_recommendations_keep_balanced_cuda_on_faster_whisper(self):
         self.assertIn('"performance_preset": "balanced"', self.function_source)
         self.assertIn('"transcriber_mode": "faster_whisper"', self.function_source)
-        self.assertIn('"whisper_model": "base.en"', self.function_source)
+        self.assertIn('"whisper_model": whisper_model_for_source("base.en")', self.function_source)
 
 
 if __name__ == "__main__":

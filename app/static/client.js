@@ -32,7 +32,7 @@
 
   const MAX_LIVE_SEGMENTS = 120;
   const MAX_TRANSCRIPT_ITEMS = 1000;
-  const SOURCE_LANGUAGE = 'en';
+  const SOURCE_LANGUAGE = window.CC_SOURCE_LANGUAGE || 'en';
   const VIEWER_LANGUAGE_ALIASES = {
     zh: 'zh-hans',
     'zh-cn': 'zh-hans',

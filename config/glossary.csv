@@ -1,2 +1,7 @@
 wrong,correct
-# Add church-specific names or corrections below. This file is preserved during updates.
+# Glossário local da sua casa espírita. Este arquivo é preservado nas atualizações.
+# Uma linha por correção: como o Whisper escreveu errado,forma correta
+# As correções valem para a transcrição (texto de origem) antes da tradução.
+# Exemplos (apague o # para ativar):
+# divaldo pereira,Divaldo Franco
+# centro espirita luz,Centro Espírita Luz

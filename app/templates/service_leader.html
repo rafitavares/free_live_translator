@@ -11,6 +11,7 @@
 </head>
 <body class="service-leader-page glass-page">
   <script>
+    const CC_SRC = {{ source_language | tojson }};
     (function () {
       const stored = localStorage.getItem('serviceLeaderTheme');
       const manual = localStorage.getItem('serviceLeaderThemeManual') === '1';
@@ -808,7 +809,7 @@
       if (slots) slots.textContent = `${active.length} / ${limit}${active.length ? ` · ${active.map(serviceLeaderLanguageDisplayName).join(', ')}` : ''}`;
       if (demand) {
         const demandItems = Object.entries(translation.viewer_language_counts || {})
-          .filter(([code, count]) => String(code).toLowerCase() !== 'en' && Number(count || 0) > 0)
+          .filter(([code, count]) => String(code).toLowerCase() !== CC_SRC && Number(count || 0) > 0)
           .sort((a, b) => Number(b[1]) - Number(a[1]));
         demand.textContent = demandItems.length
           ? demandItems.map(([code, count]) => `${serviceLeaderLanguageDisplayName(code)} ${count}`).join(' · ')

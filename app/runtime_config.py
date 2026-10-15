@@ -10,6 +10,7 @@ from threading import Lock
 from typing import Any
 
 from app.i18n import MAX_TRANSLATION_LANGUAGES
+from app.source_language import ALL_WHISPER_MODELS, SOURCE_LANGUAGE
 from app.paths import data_path, migrate_project_data
 
 CONFIG_PATH = data_path("runtime_config.json")
@@ -33,7 +34,7 @@ DEFAULTS: dict[str, Any] = {
     "transcript_retention_minutes": 120,
     "translation_enabled": False,
     "translation_provider": "argos",
-    "translation_allowed_languages": ["en"],
+    "translation_allowed_languages": [SOURCE_LANGUAGE],
     "translation_max_active_languages": 2,
     "translation_language_policy": "automatic",
     "translation_priority_mode": "most_viewers",
@@ -97,7 +98,7 @@ def save_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
             cfg["performance_platform"] = "auto"
         if cfg.get("transcriber_mode") is not None and (not isinstance(cfg.get("transcriber_mode"), str) or cfg.get("transcriber_mode") not in {"whisper", "faster_whisper"}):
             cfg["transcriber_mode"] = None
-        if cfg.get("whisper_model") is not None and (not isinstance(cfg.get("whisper_model"), str) or cfg.get("whisper_model") not in {"tiny.en", "base.en", "small.en", "medium.en"}):
+        if cfg.get("whisper_model") is not None and (not isinstance(cfg.get("whisper_model"), str) or cfg.get("whisper_model") not in ALL_WHISPER_MODELS):
             cfg["whisper_model"] = None
         if cfg.get("whisper_device") is not None and (not isinstance(cfg.get("whisper_device"), str) or cfg.get("whisper_device") not in {"auto", "cpu", "cuda", "mps"}):
             cfg["whisper_device"] = None
@@ -121,12 +122,12 @@ def save_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
                 cfg[key] = default
         if cfg.get("security_mode") not in {"easy_offline", "secure_operator", "managed_https"}:
             cfg["security_mode"] = "secure_operator"
-        allowed = cfg.get("translation_allowed_languages") or ["en"]
+        allowed = cfg.get("translation_allowed_languages") or [SOURCE_LANGUAGE]
         if not isinstance(allowed, list):
-            allowed = ["en"]
-        cfg["translation_allowed_languages"] = sorted(set(str(x).lower().strip() for x in allowed if str(x).strip())) or ["en"]
-        if "en" not in cfg["translation_allowed_languages"]:
-            cfg["translation_allowed_languages"].insert(0, "en")
+            allowed = [SOURCE_LANGUAGE]
+        cfg["translation_allowed_languages"] = sorted(set(str(x).lower().strip() for x in allowed if str(x).strip())) or [SOURCE_LANGUAGE]
+        if SOURCE_LANGUAGE not in cfg["translation_allowed_languages"]:
+            cfg["translation_allowed_languages"].insert(0, SOURCE_LANGUAGE)
         CONFIG_PATH.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
         return cfg
 

@@ -6,6 +6,8 @@ Whisper decoding with a modest beam search.
 """
 from __future__ import annotations
 
+from app.source_language import SOURCE_LANGUAGE, whisper_model_for_source
+
 import asyncio
 import difflib
 import platform
@@ -43,9 +45,9 @@ from app.transcription.streaming_words import (
 class WhisperLiveTranscriber(AudioStreamWatchdog, Transcriber):
     def __init__(
         self,
-        model_name: str = "base.en",
+        model_name: str = "base",
         device: str = "auto",
-        language: str = "en",
+        language: str = SOURCE_LANGUAGE,
         audio_device: str | int | None = None,
         sample_rate: int = 16000,
         chunk_seconds: int = 2,
@@ -57,7 +59,7 @@ class WhisperLiveTranscriber(AudioStreamWatchdog, Transcriber):
         initial_prompt: str | None = None,
         beam_size: int = 5,
     ):
-        self.model_name = model_name
+        self.model_name = whisper_model_for_source(model_name, language)
         self.requested_device = device
         self.device = self._resolve_device(device)
         self.language = language

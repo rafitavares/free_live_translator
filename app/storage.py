@@ -24,6 +24,12 @@ WHISPER_MODEL_LABELS = {
     "base.en": "Whisper base.en",
     "small.en": "Whisper small.en",
     "medium.en": "Whisper medium.en",
+    "tiny": "Whisper tiny",
+    "base": "Whisper base",
+    "small": "Whisper small",
+    "medium": "Whisper medium",
+    "large-v3": "Whisper large-v3",
+    "large-v3-turbo": "Whisper large-v3-turbo",
 }
 
 

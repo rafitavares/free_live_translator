@@ -26,12 +26,16 @@ cat <<'MSG'
 
 Argos Translate is installed in the local .venv.
 
-The next step attempts to download/install English -> target-language packages.
-Default scope: common church languages. Use --all to install every English -> target package in the Argos index.
+The next step downloads packages that translate FROM the speaker's language
+(CAPTION_SOURCE_LANGUAGE, default pt). If no direct pack exists, it installs
+source->English + English->target and Argos chains them. Use --all for every reachable language.
 This requires internet access now, but live translation itself runs locally afterwards.
 
 MSG
 python - <<PY
+from app.resource_installer import install_argos
+install_argos(all_languages=("$INSTALL_SCOPE" == "all"))
+PY
 from argostranslate import package
 from app.translation_packages import validate_argos_package_archive
 from app.install_progress import write_install_progress
@@ -87,7 +91,7 @@ if not env_path.exists():
 values = {
     'TRANSLATION_ENABLED': 'true' if '$ENABLE_RUNTIME' == 'true' else 'false',
     'TRANSLATION_PROVIDER': 'argos',
-    'TRANSLATION_ALLOWED_LANGUAGES': 'en',
+    'TRANSLATION_ALLOWED_LANGUAGES': '',
     'TRANSLATION_MAX_ACTIVE_LANGUAGES': '1',
 }
 

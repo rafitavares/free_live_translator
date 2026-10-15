@@ -76,6 +76,7 @@ from app.profanity_filter import ProfanityFilter
 from app.settings import get_settings
 from app.networking import default_base_url, detected_local_hostname, local_hostname_is_configured, local_ip
 from app.runtime_config import load_runtime_config, set_audio_device, set_performance_config, set_privacy_config, set_profanity_filter_config, set_translation_config, set_translated_audio_config, set_security_config
+from app.source_language import default_initial_prompt, whisper_model_for_source
 from app.i18n import LANGUAGE_BY_CODE, SOURCE_LANGUAGE, SUPPORTED_LANGUAGES, normalise_language
 from app.localisation import get_client_ui_language_strings, get_client_ui_sources, get_client_ui_strings, get_runtime_translated_client_ui_strings
 from app.paths import app_support_dir, resource_root, runtime_mode
@@ -314,7 +315,7 @@ hub = CaptionHub(
 hub.configure_translation(
     enabled=startup_translation_allowed and bool(runtime_config.get("translation_enabled", settings.translation_enabled)),
     provider=runtime_config.get("translation_provider") or settings.translation_provider,
-    allowed_languages=runtime_config.get("translation_allowed_languages", (settings.translation_allowed_languages or "en").split(",")),
+    allowed_languages=runtime_config.get("translation_allowed_languages", [x for x in (settings.translation_allowed_languages or SOURCE_LANGUAGE).split(",") if x.strip()] or [SOURCE_LANGUAGE]),
     max_active_languages=startup_translation_max_active,
     language_policy=runtime_config.get("translation_language_policy", "automatic"),
     priority_mode=runtime_config.get("translation_priority_mode", "most_viewers"),
@@ -323,6 +324,7 @@ hub.configure_translation(
 glossary = Glossary()
 profanity_filter = ProfanityFilter()
 templates = Jinja2Templates(directory=str(PROJECT_ROOT / "app" / "templates"))
+templates.env.globals["source_language"] = SOURCE_LANGUAGE  # fork: língua do palestrante para o front-end
 _TEMPLATE_RESPONSE_ACCEPTS_REQUEST = "request" in inspect.signature(templates.TemplateResponse).parameters
 
 
@@ -497,7 +499,7 @@ PERFORMANCE_PRESETS = {
         "label": "Fastest, less accurate",
         "description": "Lowest delay for older PCs. Best for testing or slower hardware.",
         "transcriber_mode": "faster_whisper",
-        "whisper_model": "tiny.en",
+        "whisper_model": whisper_model_for_source("tiny.en"),
         "whisper_compute_type": "auto",
         "whisper_beam_size": 1,
         "chunk_seconds": 1.0,
@@ -510,7 +512,7 @@ PERFORMANCE_PRESETS = {
         "label": "Fast",
         "description": "Quick captions with better wording than tiny on most speech.",
         "transcriber_mode": "faster_whisper",
-        "whisper_model": "base.en",
+        "whisper_model": whisper_model_for_source("base.en"),
         "whisper_compute_type": "auto",
         "whisper_beam_size": 1,
         "chunk_seconds": 1.25,
@@ -523,7 +525,7 @@ PERFORMANCE_PRESETS = {
         "label": "Balanced",
         "description": "Recommended starting point for live church services.",
         "transcriber_mode": "faster_whisper",
-        "whisper_model": "base.en",
+        "whisper_model": whisper_model_for_source("base.en"),
         "whisper_compute_type": "auto",
         "whisper_beam_size": 1,
         "chunk_seconds": 1.5,
@@ -536,7 +538,7 @@ PERFORMANCE_PRESETS = {
         "label": "Accurate",
         "description": "More context and stability, with a little more delay.",
         "transcriber_mode": "faster_whisper",
-        "whisper_model": "small.en",
+        "whisper_model": whisper_model_for_source("small.en"),
         "whisper_compute_type": "auto",
         "whisper_beam_size": 1,
         "chunk_seconds": 2.0,
@@ -549,7 +551,7 @@ PERFORMANCE_PRESETS = {
         "label": "Slowest, most accurate",
         "description": "Uses the medium Whisper model. Best for powerful systems; benchmark it before relying on it live.",
         "transcriber_mode": "whisper",
-        "whisper_model": "medium.en",
+        "whisper_model": whisper_model_for_source("medium.en"),
         "whisper_compute_type": "auto",
         "whisper_beam_size": 5,
         "chunk_seconds": 2.0,
@@ -750,7 +752,7 @@ def service_leader_language_context() -> dict:
     provider_codes = set(hub.translator.supported_languages_for_provider(provider))
     selected_codes = {
         code
-        for code in runtime.get("translation_allowed_languages", ["en"])
+        for code in runtime.get("translation_allowed_languages", [SOURCE_LANGUAGE])
         if code != SOURCE_LANGUAGE and code in provider_codes
     }
     language_policy = str(runtime.get("translation_language_policy") or "automatic")
@@ -1068,7 +1070,7 @@ def recommended_performance_config(status: dict | None = None) -> dict:
             "performance_preset": "balanced",
             "performance_platform": "auto",
             "transcriber_mode": "faster_whisper",
-            "whisper_model": "base.en",
+            "whisper_model": whisper_model_for_source("base.en"),
             "whisper_device": "auto",
             "whisper_compute_type": "auto",
         }
@@ -1078,7 +1080,7 @@ def recommended_performance_config(status: dict | None = None) -> dict:
             "performance_preset": "balanced",
             "performance_platform": "auto",
             "transcriber_mode": "faster_whisper",
-            "whisper_model": "base.en",
+            "whisper_model": whisper_model_for_source("base.en"),
             "whisper_device": "auto",
             "whisper_compute_type": "auto",
         }
@@ -1088,7 +1090,7 @@ def recommended_performance_config(status: dict | None = None) -> dict:
             "performance_preset": "fastest",
             "performance_platform": "auto",
             "transcriber_mode": "faster_whisper",
-            "whisper_model": "tiny.en",
+            "whisper_model": whisper_model_for_source("tiny.en"),
             "whisper_device": "auto",
             "whisper_compute_type": "auto",
         }
@@ -1098,7 +1100,7 @@ def recommended_performance_config(status: dict | None = None) -> dict:
             "performance_preset": "fast",
             "performance_platform": "auto",
             "transcriber_mode": "faster_whisper",
-            "whisper_model": "base.en",
+            "whisper_model": whisper_model_for_source("base.en"),
             "whisper_device": "auto",
             "whisper_compute_type": "auto",
         }
@@ -1623,14 +1625,14 @@ def create_transcriber():
     if mode == "faster_whisper" and transcriber_device == "mps":
         transcriber_device = "auto"
     active_context = service_context.active_snapshot()
-    base_initial_prompt = glossary.initial_prompt(settings.whisper_initial_prompt)
+    base_initial_prompt = glossary.initial_prompt(settings.whisper_initial_prompt or default_initial_prompt())
     initial_prompt = base_initial_prompt
     if active_context and active_context.recognition_assistance_enabled and mode != "faster_whisper":
         initial_prompt = active_context.initial_prompt
     common = dict(
-        model_name=performance["whisper_model"],
+        model_name=whisper_model_for_source(performance["whisper_model"]),
         device=transcriber_device,
-        language=settings.language,
+        language=SOURCE_LANGUAGE,
         audio_device=selected_audio_device(),
         sample_rate=settings.sample_rate,
         chunk_seconds=performance["chunk_seconds"],
@@ -3016,7 +3018,7 @@ async def approve_service_context(request: Request, _: None = Depends(require_op
         payload = await request.json()
         if not isinstance(payload, dict):
             raise ServiceContextError("invalid_review", "The reviewed service context was invalid.")
-        return service_context.approve(payload, base_prompt=glossary.initial_prompt(settings.whisper_initial_prompt))
+        return service_context.approve(payload, base_prompt=glossary.initial_prompt(settings.whisper_initial_prompt or default_initial_prompt()))
     except ServiceContextError as exc:
         return service_context_error_response(exc, 409 if exc.code == "captions_running" else 400)
 
@@ -3029,7 +3031,7 @@ async def rearm_service_context(request: Request, _: None = Depends(require_oper
             ServiceContextError("captions_running", "Stop captions before re-arming service context."), 409
         )
     try:
-        return service_context.rearm(base_prompt=glossary.initial_prompt(settings.whisper_initial_prompt))
+        return service_context.rearm(base_prompt=glossary.initial_prompt(settings.whisper_initial_prompt or default_initial_prompt()))
     except ServiceContextError as exc:
         return service_context_error_response(exc)
 
@@ -3155,7 +3157,7 @@ async def service_leader_update_languages(request: Request, session: ServiceLead
     provider_codes = set(hub.translator.supported_languages_for_provider(provider))
     operator_allowed_codes = {
         code
-        for code in runtime.get("translation_allowed_languages", ["en"])
+        for code in runtime.get("translation_allowed_languages", [SOURCE_LANGUAGE])
         if code != SOURCE_LANGUAGE and code in provider_codes
     }
     selectable_codes = operator_allowed_codes if str(runtime.get("translation_language_policy") or "automatic") == "restricted" else provider_codes
@@ -3323,9 +3325,9 @@ async def update_translation(request: Request, _: None = Depends(require_operato
             {"status": "error", "error": deployment["capabilities"].get("message") or "Translation is not enabled for this appliance profile."},
             status_code=409,
         )
-    allowed = body.get("translation_allowed_languages") or ["en"]
+    allowed = body.get("translation_allowed_languages") or [SOURCE_LANGUAGE]
     if not isinstance(allowed, list):
-        allowed = ["en"]
+        allowed = [SOURCE_LANGUAGE]
     allowed = [normalise_language(x) for x in allowed]
     max_active = clamp_translation_max_for_deployment(int(body.get("translation_max_active_languages", 2)), deployment)
     provider = str(body.get("translation_provider") or "argos")

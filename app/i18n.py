@@ -40,7 +40,7 @@ def _use_bounded_argos_cue(translation: Any) -> None:
         if candidate is None:
             return
 
-SOURCE_LANGUAGE = "en"
+from app.source_language import SOURCE_LANGUAGE  # noqa: E402  (fork: língua de origem configurável)
 CT2_SMALL100_PROVIDER = "ct2small100"
 CT2_SMALL100_MODEL_NAME = "alirezamsh/small100"
 CT2_SMALL100_MODEL_REVISION = "8ab680e26a596d2e3d2d2d17ae0f68df1037328c"
@@ -474,7 +474,8 @@ class LocalTranslator:
                 languages -= set(CHINESE_VARIANTS)
         else:
             languages = set()
-        if tigrinya_ready and provider in {"argos", CT2_SMALL100_PROVIDER, "small100", "both"}:
+        # Fork: o modelo OPUS de tigrínia só traduz a partir do inglês.
+        if tigrinya_ready and self.source_language == "en" and provider in {"argos", CT2_SMALL100_PROVIDER, "small100", "both"}:
             languages.add("ti")
         languages.add(self.source_language)
         return sorted(language for language in languages if language in LANGUAGE_BY_CODE)
@@ -539,7 +540,7 @@ class LocalTranslator:
 
         attempts: list[str] = []
         actual_provider: str | None = None
-        if target_language == "ti" and provider != "demo":
+        if target_language == "ti" and provider != "demo" and self.source_language == "en":
             attempts.append(OPUS_TIGRINYA_PROVIDER)
             result = self._translate_with_opus_tigrinya(text)
             actual_provider = OPUS_TIGRINYA_PROVIDER

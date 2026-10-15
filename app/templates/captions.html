@@ -103,6 +103,7 @@
     </footer>
   </main>
   <script>
+    window.CC_SOURCE_LANGUAGE = {{ source_language | tojson }};
     window.CC_LANGUAGES = {{ languages | tojson }};
     window.CC_UI_STRINGS = {{ ui_strings | tojson }};
     window.CC_UI_STRING_SOURCES = {{ ui_string_sources | tojson }};

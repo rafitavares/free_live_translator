@@ -11,6 +11,7 @@ from pathlib import Path
 
 from app.install_progress import write_install_progress
 from app.paths import model_data_dir, resource_root
+from app.source_language import SOURCE_LANGUAGE
 from app.translation_packages import validate_argos_package_archive
 
 
@@ -19,7 +20,8 @@ SMALL100_REVISION = "8ab680e26a596d2e3d2d2d17ae0f68df1037328c"
 SMALL100_TOKENIZER_SHA256 = "73c8d2405e9c588582434c9f91327127faf133b9f915b203ed07ba4cd0ca9c92"
 TIGRINYA_MODEL = "Helsinki-NLP/opus-mt-en-ti"
 TIGRINYA_REVISION = "72f1e40b4b60ff4863407f90792b4fac517562ec"
-COMMON_ARGOS_TARGETS = ("es", "fr", "pt", "pl", "uk", "ar", "fa", "zh", "zt")
+# Fork: alvos comuns para palestras na Suíça/Europa (a origem é excluída automaticamente).
+COMMON_ARGOS_TARGETS = ("de", "en", "fr", "it", "es", "pt", "uk", "ar", "fa", "zh", "zt")
 
 
 def validate_packaged_installer_runtime() -> None:
@@ -69,32 +71,60 @@ def _check_small100_tokenizer() -> Path:
 
 
 def install_argos(*, all_languages: bool = False) -> None:
+    """Install Argos packs that translate *from* the speaker's language.
+
+    Fork: the upstream installer only handled English -> X. When the source is
+    not English we install a direct SOURCE -> X pack when the Argos index has
+    one; otherwise SOURCE -> EN plus EN -> X, which Argos chains automatically
+    (pivot through English).
+    """
     from argostranslate import package
 
+    src = SOURCE_LANGUAGE
     write_install_progress(10, "package-index", "Loading the Base language package index.")
     package.update_package_index()
     available = package.get_available_packages()
-    targets = (
-        sorted({item.to_code for item in available if item.from_code == "en" and item.to_code != "en"})
-        if all_languages
-        else list(COMMON_ARGOS_TARGETS)
-    )
+
+    def find(from_code: str, to_code: str):
+        return [item for item in available if item.from_code == from_code and item.to_code == to_code]
+
+    if all_languages:
+        reachable = {item.to_code for item in available if item.from_code == src}
+        if src != "en" and find(src, "en"):
+            reachable |= {item.to_code for item in available if item.from_code == "en"}
+        targets = sorted(reachable - {src})
+    else:
+        targets = [code for code in COMMON_ARGOS_TARGETS if code != src]
+
+    installed_ids: set[tuple[str, str]] = set()
+
+    def install_pair(from_code: str, to_code: str) -> bool:
+        if (from_code, to_code) in installed_ids:
+            return True
+        candidates = find(from_code, to_code)
+        if not candidates:
+            return False
+        archive = candidates[0].download()
+        validate_argos_package_archive(archive)
+        package.install_from_path(archive)
+        installed_ids.add((from_code, to_code))
+        return True
+
     items = [{"id": code, "label": code.upper(), "state": "pending", "percent": 0} for code in targets]
     write_install_progress(14, "package-index", f"Found {len(targets)} Base language packages to check.", item_count=len(targets), items=items)
     for index, target in enumerate(targets, start=1):
         start = 14 + round(80 * ((index - 1) / max(1, len(targets))))
         items[index - 1].update(state="downloading", percent=20)
-        write_install_progress(start, "downloading-package", f"Downloading and installing English to {target.upper()}.", item_index=index, item_count=len(targets), items=items, indeterminate=True)
-        candidates = [item for item in available if item.from_code == "en" and item.to_code == target]
-        if not candidates:
+        write_install_progress(start, "downloading-package", f"Downloading and installing {src.upper()} to {target.upper()}.", item_index=index, item_count=len(targets), items=items, indeterminate=True)
+        ok = install_pair(src, target)
+        if not ok and src != "en" and target != "en":
+            ok = bool(find(src, "en")) and bool(find("en", target)) and install_pair(src, "en") and install_pair("en", target)
+        if not ok:
             items[index - 1].update(state="error", percent=100)
-            write_install_progress(start, "package-missing", f"No English to {target.upper()} package was available.", item_index=index, item_count=len(targets), items=items)
+            write_install_progress(start, "package-missing", f"No {src.upper()} to {target.upper()} package (direct or via English) was available.", item_index=index, item_count=len(targets), items=items)
             continue
-        archive = candidates[0].download()
-        validate_argos_package_archive(archive)
-        package.install_from_path(archive)
         items[index - 1].update(state="complete", percent=100)
-        write_install_progress(14 + round(80 * (index / max(1, len(targets)))), "package-complete", f"English to {target.upper()} is installed.", item_index=index, item_count=len(targets), items=items)
+        write_install_progress(14 + round(80 * (index / max(1, len(targets)))), "package-complete", f"{src.upper()} to {target.upper()} is installed.", item_index=index, item_count=len(targets), items=items)
     write_install_progress(100, "complete", "Base translation packages are ready.")
 
 

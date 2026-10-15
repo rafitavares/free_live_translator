@@ -66,6 +66,19 @@ _PROMPT_CATEGORY_WEIGHTS = {
 }
 
 
+def _builtin_resources_for_source() -> tuple[Path, Path]:
+    """Fork: escolhe correções e termos embutidos pela língua do palestrante."""
+    from app.source_language import SOURCE_LANGUAGE
+
+    if SOURCE_LANGUAGE == "en":
+        return _RESOURCE_DIR / "christian_corrections.csv", _RESOURCE_DIR / "christian_prompt_terms.txt"
+    # Sem arquivos para a língua: nenhuma correção embutida (o glossário local continua valendo).
+    return (
+        _RESOURCE_DIR / f"spiritist_corrections_{SOURCE_LANGUAGE}.csv",
+        _RESOURCE_DIR / f"spiritist_prompt_terms_{SOURCE_LANGUAGE}.txt",
+    )
+
+
 class Glossary:
     """Apply local overrides and versioned built-ins in one non-cascading pass."""
 
@@ -77,10 +90,9 @@ class Glossary:
         prompt_terms_path: str | Path | None = None,
     ):
         self.path = Path(path)
-        self.builtin_path = Path(builtin_path) if builtin_path else _RESOURCE_DIR / "christian_corrections.csv"
-        self.prompt_terms_path = (
-            Path(prompt_terms_path) if prompt_terms_path else _RESOURCE_DIR / "christian_prompt_terms.txt"
-        )
+        default_corrections, default_terms = _builtin_resources_for_source()
+        self.builtin_path = Path(builtin_path) if builtin_path else default_corrections
+        self.prompt_terms_path = Path(prompt_terms_path) if prompt_terms_path else default_terms
         self.rules: list[_Rule] = []
         self.replacements: list[tuple[re.Pattern[str], str]] = []
         self.prompt_terms: tuple[str, ...] = ()
@@ -98,6 +110,8 @@ class Glossary:
                 wrong = (row.get("wrong") or "").strip()
                 correct = (row.get("correct") or "").strip()
                 if not wrong or not correct or wrong == correct:
+                    continue
+                if wrong.startswith("#"):  # fork: permite linhas de comentário no CSV
                     continue
                 if source == "local" and (wrong.casefold(), correct) in _LEGACY_SHIPPED_ROWS:
                     continue

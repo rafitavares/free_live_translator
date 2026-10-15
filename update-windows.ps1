@@ -7,8 +7,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$LatestReleaseUrl = "https://api.github.com/repos/Church-Cap/Live-Church-Captions/releases/latest"
-$RepoTagZipBaseUrl = "https://github.com/Church-Cap/Live-Church-Captions/archive/refs/tags"
+$LatestReleaseUrl = "https://api.github.com/repos/rafitavares/free_live_translator/releases/latest"
+$RepoTagZipBaseUrl = "https://github.com/rafitavares/free_live_translator/archive/refs/tags"
 $AppDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "church-cap-update-$Stamp"

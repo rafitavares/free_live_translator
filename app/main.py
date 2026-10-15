@@ -2240,6 +2240,22 @@ async def operator(request: Request, _: None = Depends(require_operator)):
 
 
 
+@app.get("/simples", response_class=HTMLResponse)
+async def simple_operator(request: Request, _: None = Depends(require_operator)):
+    """Fork: painel simplificado em português (microfone, línguas, iniciar, QR)."""
+    return template_response(
+        "simple.html",
+        {
+            **base_template_context(request),
+            "caption_url": f"{base_url(request)}/",
+            "caption_ip_url": f"{ip_base_url(request)}/",
+            "languages": SUPPORTED_LANGUAGES,
+            "source_language": SOURCE_LANGUAGE,
+            "csrf_token": _operator_csrf_for_request(request),
+        },
+    )
+
+
 def _qr_png_response(value: str, filename: str | None = None) -> Response:
     img = qrcode.make(value)
     buf = io.BytesIO()

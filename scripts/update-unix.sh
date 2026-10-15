@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-LATEST_RELEASE_URL="https://api.github.com/repos/Church-Cap/Live-Church-Captions/releases/latest"
-RELEASES_URL="https://api.github.com/repos/Church-Cap/Live-Church-Captions/releases?per_page=100"
-REPO_TAG_ZIP_BASE_URL="https://github.com/Church-Cap/Live-Church-Captions/archive/refs/tags"
+LATEST_RELEASE_URL="https://api.github.com/repos/rafitavares/free_live_translator/releases/latest"
+RELEASES_URL="https://api.github.com/repos/rafitavares/free_live_translator/releases?per_page=100"
+REPO_TAG_ZIP_BASE_URL="https://github.com/rafitavares/free_live_translator/archive/refs/tags"
 APP_DIR="${CHURCH_CAP_UPDATE_APP_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 START_SCRIPT="${CHURCH_CAP_UPDATE_START_SCRIPT:-start-macos.sh}"
 SETUP_SCRIPT="${CHURCH_CAP_UPDATE_SETUP_SCRIPT:-setup-macos.sh}"
@@ -264,7 +264,7 @@ if [[ -z "$REMOTE_TAG" || -z "$REMOTE_VERSION" ]]; then
   exit 1
 fi
 if [[ -n "$RELEASE_ASSET_NAME" ]]; then
-  RELEASE_URL="https://github.com/Church-Cap/Live-Church-Captions/releases/download/$REMOTE_TAG/$RELEASE_ASSET_NAME"
+  RELEASE_URL="https://github.com/rafitavares/free_live_translator/releases/download/$REMOTE_TAG/$RELEASE_ASSET_NAME"
   CHECKSUM_URL="${RELEASE_URL}.sha256"
 else
   RELEASE_URL="$REPO_TAG_ZIP_BASE_URL/$REMOTE_TAG.zip"

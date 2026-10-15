@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 ALLOWED_TARGETS = {"darwin-aarch64", "windows-x86_64"}
 VERSION_PATTERN = re.compile(r"^(?:v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+][0-9A-Za-z.-]+)?$")
-RELEASE_URL_PREFIX = "/Church-Cap/Live-Church-Captions/releases/download/"
+RELEASE_URL_PREFIX = "/rafitavares/free_live_translator/releases/download/"
 
 
 def parser() -> argparse.ArgumentParser:

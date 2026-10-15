@@ -32,32 +32,33 @@ microfone / mesa de som
 
 Com `CAPTION_SOURCE_LANGUAGE=en`, o comportamento volta a ser o do Church Cap original.
 
-## Instalação
+## Como usar (dois cliques)
 
-Requisitos recomendados: Mac com chip Apple Silicon e 16 GB de RAM, ou PC Windows/Linux com CPU de 6 a 8 núcleos e 16 GB. GPU NVIDIA ajuda bastante. Em máquinas sem GPU, mantenha uma ou duas línguas traduzidas ao mesmo tempo.
+1. Baixe o programa: botão verde **Code → Download ZIP** nesta página e descompacte. Quem usa git pode fazer `git clone https://github.com/rafitavares/free_live_translator.git`.
+2. Dê dois cliques no atalho do seu sistema:
+   - **Windows:** `Iniciar-Windows.bat`
+   - **Mac:** `Iniciar-Mac.command`. Se o Mac bloquear, clique com o botão direito → Abrir. Na primeira vez também pode ser preciso rodar `chmod +x Iniciar-Mac.command` no Terminal.
+3. **Na primeira vez**, o atalho instala tudo sozinho: Python, bibliotecas e as línguas mais comuns. Isso precisa de internet e leva de 10 a 30 minutos. Depois disso, o programa funciona offline.
+4. O navegador abre e pede para criar a **senha do operador**.
+5. Aparece o **painel simples**:
+   - escolha o microfone;
+   - marque as línguas;
+   - clique em **Iniciar tradução**;
+   - mostre o QR code ao público.
 
-**macOS**
+As outras vezes são só dois cliques no atalho. Para encerrar, feche a janela preta do terminal.
+
+O painel completo, com desempenho, glossário e diagnóstico, fica em **Modo avançado**, no rodapé do painel simples.
+
+Requisitos recomendados: Mac com chip Apple Silicon e 16 GB de RAM, ou PC Windows/Linux com CPU de 6 a 8 núcleos e 16 GB. GPU NVIDIA ajuda bastante. Em computadores sem placa de vídeo, ofereça uma ou duas línguas ao mesmo tempo.
+
+### Instalação manual (terminal)
 
 ```bash
-bash setup-macos.sh
-./start-macos.sh
+bash setup-macos.sh && ./start-macos.sh          # macOS
+.\setup-windows.cmd ; .\start-windows.cmd        # Windows (PowerShell)
+bash setup-linux.sh && ./start-linux.sh          # Linux
 ```
-
-**Windows (PowerShell)**
-
-```powershell
-.\setup-windows.cmd
-.\start-windows.cmd
-```
-
-**Linux**
-
-```bash
-bash setup-linux.sh
-./start-linux.sh
-```
-
-Na primeira execução, o navegador abre `http://localhost:9090/setup` para você criar a senha do operador. O público usa a porta 8080, pelo QR code mostrado no painel.
 
 ### Definir a língua do palestrante
 

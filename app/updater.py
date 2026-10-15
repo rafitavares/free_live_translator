@@ -10,7 +10,7 @@ from pathlib import Path
 from app.storage import rotate_log_file
 
 
-LATEST_RELEASE_URL = "https://api.github.com/repos/Church-Cap/Live-Church-Captions/releases/latest"
+LATEST_RELEASE_URL = "https://api.github.com/repos/rafitavares/free_live_translator/releases/latest"
 
 
 def normalise_version(version: str | None) -> str:

@@ -1,10 +1,20 @@
 param(
-    [switch]$SkipTranslation
+    [switch]$SkipTranslation,
+    # Fork: -Auto responde as perguntas com o padrão recomendado (usado por Iniciar-Windows.bat).
+    [switch]$Auto
 )
 
 $ErrorActionPreference = "Stop"
 $AppDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $AppDir
+
+function Ask([string]$Prompt, [string]$AutoAnswer) {
+    if ($Auto) {
+        Write-Host "$Prompt $AutoAnswer (automatico)"
+        return $AutoAnswer
+    }
+    return Read-Host $Prompt
+}
 
 function Step($Message) {
     Write-Host ""
@@ -47,7 +57,7 @@ Write-Host "  - Optional NVIDIA GPU with current drivers for CUDA acceleration"
 Write-Host "  - AMD ROCm is not enabled yet; it is planned as an experimental Linux research path"
 Write-Host ""
 
-$answer = Read-Host "Continue with setup? [y/N]"
+$answer = Ask "Continue with setup? [y/N]" "y"
 if ($answer -notmatch "^(y|yes)$") {
     Write-Host "Setup cancelled."
     exit 0
@@ -92,7 +102,7 @@ if (-not $Python) {
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if ($winget) {
         Write-Host "Windows Package Manager (winget) is available."
-        $installPython = Read-Host "Install Python 3.12 now with winget? [y/N]"
+        $installPython = Ask "Install Python 3.12 now with winget? [y/N]" "y"
         if ($installPython -match "^(y|yes)$") {
             winget install --id Python.Python.3.12 --source winget --accept-package-agreements --accept-source-agreements
             $Python = Find-Python
@@ -157,7 +167,7 @@ if ($GpuStatus -and $GpuStatus.nvidia_smi_available -and -not $GpuStatus.cuda_av
     }
     Write-Host "Church Cap can install or force reinstall local NVIDIA CUDA 12 runtime packages into .venv."
     Write-Host "This is optional, large, and only affects this Church Cap folder."
-    $installCudaRuntime = Read-Host "Install or force reinstall local CUDA 12 runtime packages now? [y/N]"
+    $installCudaRuntime = Ask "Install or force reinstall local CUDA 12 runtime packages now? [y/N]" "n"
     if ($installCudaRuntime -match "^(y|yes)$") {
         & (Join-Path $AppDir "scripts\install-cuda-runtime-windows.ps1")
     } else {
@@ -180,7 +190,7 @@ if ($SkipTranslation) {
     Write-Host "  3) Install common Base package plus Recommended package / CTranslate2 INT8"
     Write-Host "  4) Install common Base package plus Compatibility package / PyTorch SMaLL-100"
     Write-Host "  5) Skip translation resources for now"
-    $translationAnswer = Read-Host "Choose translation setup [1]"
+    $translationAnswer = Ask "Choose translation setup [1]" "1"
     switch ($translationAnswer) {
         "2" { & (Join-Path $AppDir "scripts\install-translation-models-argos.ps1") -All }
         "3" {

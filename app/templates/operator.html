@@ -12,6 +12,12 @@
   <script>
     window.CC_SOURCE_LANGUAGE = window.CC_SOURCE_LANGUAGE || {{ source_language | tojson }};
     const CC_SRC = window.CC_SOURCE_LANGUAGE;
+    // Fork: abre o painel simples por padrão; o link "Modo avançado" grava a escolha.
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('simples') === '0') localStorage.setItem('flt-advanced', '1');
+      if (!localStorage.getItem('flt-advanced')) location.replace('/simples');
+    } catch (e) {}
     (function () {
       const stored = localStorage.getItem('operatorTheme');
       const manual = localStorage.getItem('operatorThemeManual') === '1';
@@ -43,6 +49,7 @@
     })();
   </script>
 
+  <a href="/simples" onclick="try{localStorage.removeItem('flt-advanced')}catch(e){}" style="position:fixed;top:10px;right:14px;z-index:9999;padding:6px 12px;border-radius:999px;background:#2f6f5e;color:#fff;font:600 14px system-ui;text-decoration:none">← Modo simples</a>
   <main class="operator-app-shell premium-operator-shell glass-shell">
     <aside class="operator-sidebar premium-sidebar glass-card" aria-label="Operator sections">
       <div class="sidebar-topline">

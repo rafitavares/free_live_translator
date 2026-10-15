@@ -153,5 +153,25 @@ class SourceLanguageTests(unittest.TestCase):
         self.assertEqual(data["row"], "na Casa Luz")
 
 
+    def test_simple_panel_requires_login_and_renders_portuguese(self):
+        code = """
+        import json, sys, types, tempfile, os
+        sys.modules.setdefault("sounddevice", types.ModuleType("sounddevice"))
+        os.environ["CHURCH_CAP_DATA_DIR"] = tempfile.mkdtemp()
+        from fastapi.testclient import TestClient
+        import app.main as m
+        c = TestClient(m.app, base_url="http://localhost:9090")
+        anon = c.get("/simples", follow_redirects=False)
+        m.app.dependency_overrides[m.require_operator] = lambda: None
+        page = c.get("/simples")
+        print(json.dumps({"anon": anon.status_code, "ok": page.status_code,
+                          "pt": "Iniciar tradução" in page.text and '"pt"' in page.text}))
+        """
+        data = run_probe(code, "pt")
+        self.assertEqual(data["anon"], 303)
+        self.assertEqual(data["ok"], 200)
+        self.assertTrue(data["pt"])
+
+
 if __name__ == "__main__":
     unittest.main()

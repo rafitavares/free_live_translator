@@ -65,7 +65,18 @@ if [[ "$(uname -m)" != "arm64" ]]; then
   echo "Warning: this script is tuned for Apple Silicon Macs. Detected: $(uname -m)" >&2
 fi
 
-read -r -p "Continue with setup? [y/N] " answer
+# Fork: FLT_AUTO=1 responde as perguntas com o padrão recomendado (usado por Iniciar-Mac.command).
+ask() {
+  local prompt="$1" auto="$2" var="$3"
+  if [[ "${FLT_AUTO:-}" == "1" ]]; then
+    echo "${prompt}${auto} (automático)"
+    printf -v "$var" '%s' "$auto"
+  else
+    read -r -p "$prompt" "$var"
+  fi
+}
+
+ask "Continue with setup? [y/N] " "y" answer
 case "${answer:-}" in
   y|Y|yes|YES) ;;
   *) echo "Setup cancelled."; exit 0 ;;
@@ -101,7 +112,7 @@ fi
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "Homebrew is required to install Python 3.12 and PortAudio."
-  read -r -p "Install Homebrew now using the official installer? [y/N] " brew_answer
+  ask "Install Homebrew now using the official installer? [y/N] " "y" brew_answer
   case "${brew_answer:-}" in
     y|Y|yes|YES)
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -176,7 +187,7 @@ else
 fi
 
 echo "The app QR code will prefer the Mac's Bonjour hostname, e.g. http://${DEFAULT_LOCALHOST}.local:8080"
-read -r -p "Set this Mac's local hostname to ${DEFAULT_LOCALHOST}.local now? Requires sudo. [y/N] " host_answer
+ask "Set this Mac's local hostname to ${DEFAULT_LOCALHOST}.local now? Requires sudo. [y/N] " "n" host_answer
 case "${host_answer:-}" in
   y|Y|yes|YES)
     sudo scutil --set ComputerName "Church Cap"
@@ -202,7 +213,7 @@ echo "  2) Install all available Base package / Argos packs"
 echo "  3) Install common Base package plus Recommended package / CTranslate2 INT8"
 echo "  4) Install common Base package plus Compatibility package / PyTorch SMaLL-100"
 echo "  5) Skip translation resources for now"
-read -r -p "Choose translation setup [1]: " translation_answer
+ask "Choose translation setup [1]: " "1" translation_answer
 case "${translation_answer:-1}" in
   2)
     ./scripts/install-translation-models-argos.sh --all || echo "Argos model installation did not complete. You can rerun ./scripts/install-translation-models-argos.sh --all later."
@@ -226,7 +237,7 @@ esac
 step "8/8 Optional local HTTPS tooling"
 echo "Local HTTPS without warnings on visitors' phones is not automatic. Browsers only trust certificates from a trusted CA."
 echo "mkcert is useful for trusted testing on this Mac, but each phone would need the local CA installed to avoid warnings."
-read -r -p "Install mkcert for local HTTPS testing on this Mac? [y/N] " mkcert_answer
+ask "Install mkcert for local HTTPS testing on this Mac? [y/N] " "n" mkcert_answer
 case "${mkcert_answer:-}" in
   y|Y|yes|YES)
     brew list mkcert >/dev/null 2>&1 || brew install mkcert

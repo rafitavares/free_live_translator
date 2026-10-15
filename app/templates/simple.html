@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="church-cap-csrf-token" content="{{ csrf_token }}">
+  <title>{{ church_name }} · Painel simples</title>
+  <style>
+    :root {
+      --bg: #f6f4ef; --card: #ffffff; --ink: #1f2328; --muted: #5d6470; --line: #e2ddd3;
+      --accent: #2f6f5e; --accent-ink: #ffffff; --stop: #b3412f; --warn: #8a5a00; --ok: #2f6f5e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #15171a; --card: #1e2125; --ink: #eceae4; --muted: #a3a8b0; --line: #30343a;
+              --accent: #5fb39b; --accent-ink: #0f1a17; --stop: #e0735f; --warn: #e0b45f; --ok: #5fb39b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    h1 { font-size: 1.6rem; margin: 0; }
+    .pill { padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: .95rem; border: 1px solid var(--line); background: var(--card); }
+    .pill.on { color: var(--ok); border-color: var(--ok); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+    .card h2 { font-size: 1.1rem; margin: 0 0 12px; display: flex; gap: 10px; align-items: center; }
+    .num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: .9rem; }
+    select, button { font: inherit; }
+    select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .langs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .langs label { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+    .langs label.missing { color: var(--muted); }
+    .langs small { color: var(--warn); margin-left: auto; font-size: .78rem; }
+    .btn { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .big { width: 100%; padding: 22px; font-size: 1.4rem; font-weight: 700; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+    .big.stop { background: var(--stop); color: #fff; }
+    .big:disabled { opacity: .6; cursor: wait; }
+    .hint { color: var(--muted); font-size: .92rem; margin: 10px 0 0; }
+    .msg { min-height: 1.5em; margin-top: 10px; font-size: .95rem; }
+    .msg.err { color: var(--stop); }
+    .qr { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .qr img { width: 200px; height: 200px; background: #fff; padding: 8px; border-radius: 12px; }
+    .qr code { font-size: 1.05rem; word-break: break-all; }
+    .bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; display: none; }
+    .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+    .live { margin-top: 12px; padding: 14px; border-radius: 10px; background: var(--bg); min-height: 3.2em; font-size: 1.1rem; }
+    footer { margin-top: 24px; text-align: right; }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <script>
+    (function () {
+      const nativeFetch = window.fetch.bind(window);
+      const csrfToken = document.querySelector('meta[name="church-cap-csrf-token"]')?.content || '';
+      window.fetch = function (input, init = {}) {
+        const method = String(init.method || 'GET').toUpperCase();
+        if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+          const headers = new Headers(init.headers || {});
+          headers.set('X-CSRF-Token', csrfToken);
+          headers.set('Content-Type', 'application/json');
+          return nativeFetch(input, {...init, headers});
+        }
+        return nativeFetch(input, init);
+      };
+    })();
+  </script>
+  <main>
+    <header>
+      <h1>{{ church_name }}</h1>
+      <span id="statusPill" class="pill">Parado</span>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2><span class="num">1</span> Microfone</h2>
+        <select id="audioSelect" aria-label="Microfone"><option>Carregando…</option></select>
+        <p class="hint">Use o microfone do palestrante ou a saída da mesa de som. Só dá para trocar com a tradução parada.</p>
+        <div id="audioMsg" class="msg"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">2</span> Línguas para o público</h2>
+        <div id="langList" class="langs"></div>
+        <p class="hint">O palestrante fala em <strong id="srcName"></strong>. Marque as línguas oferecidas ao público (1 ou 2 em computadores sem placa de vídeo).</p>
+        <button id="installBtn" class="btn" type="button" hidden>Baixar línguas (precisa de internet, só uma vez)</button>
+        <div id="installBar" class="bar"><div></div></div>
+        <div id="langMsg" class="msg"></div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:16px">
+      <h2><span class="num">3</span> Começar</h2>
+      <button id="startBtn" class="big" type="button">▶ Iniciar tradução</button>
+      <div class="live" id="livePreview" aria-live="polite"><span class="hint">A legenda aparece aqui quando o palestrante começar a falar.</span></div>
+      <div id="startMsg" class="msg"></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2><span class="num">4</span> Público: escaneie o QR code</h2>
+      <div class="qr">
+        <img src="/qr-ip.png" alt="QR code para a página das legendas">
+        <div>
+          <p>Os celulares precisam estar <strong>na mesma Wi-Fi</strong> deste computador.</p>
+          <p>Ou digite no navegador:<br><code>{{ caption_ip_url }}</code></p>
+          <p class="hint">Pessoas conectadas: <strong id="viewers">0</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <footer><a href="/operator" id="advancedLink">Modo avançado (todas as configurações) →</a></footer>
+  </main>
+
+  <script>
+    const SOURCE = {{ source_language | tojson }};
+    const ALL_LANGS = {{ languages | tojson }};
+    const OFFERED = ['de', 'en', 'fr', 'it', 'es', 'pt', 'uk', 'ar'].filter((c) => c !== SOURCE);
+    const byCode = Object.fromEntries(ALL_LANGS.map((l) => [l.code, l]));
+    const $ = (id) => document.getElementById(id);
+    let running = false;
+    let available = new Set();
+    let selected = new Set();
+    let busy = false;
+
+    $('srcName').textContent = (byCode[SOURCE] && byCode[SOURCE].native) || SOURCE;
+    try { localStorage.removeItem('flt-advanced'); } catch (e) {}
+    $('advancedLink').addEventListener('click', () => { try { localStorage.setItem('flt-advanced', '1'); } catch (e) {} });
+
+    function setMsg(id, text, isError) {
+      const el = $(id);
+      el.textContent = text || '';
+      el.classList.toggle('err', Boolean(isError));
+    }
+
+    async function api(path, body) {
+      const res = await fetch(path, body === undefined ? {} : {method: 'POST', body: JSON.stringify(body)});
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok || data.status === 'error') throw new Error(data.error || data.detail || ('Erro ' + res.status));
+      return data;
+    }
+
+    async function loadAudio() {
+      try {
+        const data = await api('/api/audio-devices');
+        const sel = $('audioSelect');
+        sel.innerHTML = '';
+        const def = document.createElement('option');
+        def.value = 'default';
+        def.textContent = 'Padrão do sistema';
+        sel.appendChild(def);
+        for (const d of data.devices || []) {
+          const o = document.createElement('option');
+          o.value = String(d.id);
+          o.textContent = d.name;
+          sel.appendChild(o);
+        }
+        const current = data.selected;
+        if (current !== null && current !== undefined) {
+          const match = (data.devices || []).find((d) => String(d.id) === String(current) || d.name === current);
+          sel.value = match ? String(match.id) : 'default';
+        }
+        if (!data.ok) setMsg('audioMsg', 'Áudio indisponível: ' + (data.error || ''), true);
+      } catch (e) { setMsg('audioMsg', e.message, true); }
+    }
+
+    $('audioSelect').addEventListener('change', async (ev) => {
+      if (running) { setMsg('audioMsg', 'Pare a tradução antes de trocar o microfone.', true); return; }
+      try {
+        await api('/api/audio-device', {audio_device: ev.target.value});
+        setMsg('audioMsg', 'Microfone salvo.');
+      } catch (e) { setMsg('audioMsg', e.message, true); }
+    });
+
+    function renderLangs() {
+      const box = $('langList');
+      box.innerHTML = '';
+      let missing = 0;
+      for (const code of OFFERED) {
+        const info = byCode[code] || {native: code, flag: ''};
+        const ready = available.has(code);
+        if (!ready) missing++;
+        const label = document.createElement('label');
+        label.classList.toggle('missing', !ready);
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = code;
+        cb.checked = selected.has(code);
+        cb.disabled = !ready || busy;
+        cb.addEventListener('change', saveLanguages);
+        label.append(cb, document.createTextNode(' ' + (info.flag || '') + ' ' + info.native));
+        if (!ready) { const s = document.createElement('small'); s.textContent = 'não baixada'; label.appendChild(s); }
+        box.appendChild(label);
+      }
+      $('installBtn').hidden = missing === 0;
+    }
+
+    async function saveLanguages() {
+      const chosen = [...$('langList').querySelectorAll('input:checked')].map((i) => i.value);
+      selected = new Set(chosen);
+      try {
+        await api('/api/translation', {
+          translation_enabled: chosen.length > 0,
+          translation_provider: 'argos',
+          translation_allowed_languages: [SOURCE, ...chosen],
+          translation_max_active_languages: Math.max(1, chosen.length),
+          translation_language_policy: 'restricted',
+        });
+        setMsg('langMsg', chosen.length ? 'Línguas salvas.' : 'Sem tradução: o público vê só a legenda original.');
+      } catch (e) { setMsg('langMsg', e.message, true); }
+    }
+
+    async function loadTranslation() {
+      try {
+        const t = await api('/api/translation/status');
+        available = new Set(t.available_languages || []);
+        selected = new Set(t.enabled ? (t.allowed_languages || []).filter((c) => c !== SOURCE) : []);
+        const inst = t.install || {};
+        busy = inst.status === 'installing';
+        const bar = $('installBar');
+        bar.style.display = busy ? 'block' : 'none';
+        if (busy) {
+          const p = inst.progress || {};
+          bar.firstElementChild.style.width = (p.percent || 5) + '%';
+          setMsg('langMsg', 'Baixando línguas… ' + (p.message || p.detail || ''));
+        } else if (inst.status === 'error') {
+          setMsg('langMsg', 'Falha ao baixar: ' + (inst.error || 'veja o modo avançado'), true);
+        }
+        $('installBtn').disabled = busy;
+        renderLangs();
+      } catch (e) { setMsg('langMsg', e.message, true); }
+    }
+
+    $('installBtn').addEventListener('click', async () => {
+      try {
+        await api('/api/translation/install', {kind: 'argos'});
+        setMsg('langMsg', 'Download iniciado. Pode levar alguns minutos.');
+        loadTranslation();
+      } catch (e) { setMsg('langMsg', e.message, true); }
+    });
+
+    function renderRunning() {
+      const btn = $('startBtn');
+      btn.textContent = running ? '■ Parar tradução' : '▶ Iniciar tradução';
+      btn.classList.toggle('stop', running);
+      $('statusPill').textContent = running ? 'Traduzindo ao vivo' : 'Parado';
+      $('statusPill').classList.toggle('on', running);
+      $('audioSelect').disabled = running;
+    }
+
+    $('startBtn').addEventListener('click', async () => {
+      const btn = $('startBtn');
+      btn.disabled = true;
+      setMsg('startMsg', running ? 'Parando…' : 'Iniciando… (na primeira vez o modelo de voz é baixado e pode demorar)');
+      try {
+        await api(running ? '/api/stop' : '/api/start', {});
+        await pollStatus();
+        setMsg('startMsg', '');
+      } catch (e) { setMsg('startMsg', e.message, true); }
+      btn.disabled = false;
+    });
+
+    async function pollStatus() {
+      try {
+        const s = await api('/api/status');
+        running = ['listening', 'starting', 'sensitive'].includes(s.status);
+        $('viewers').textContent = s.viewers || 0;
+        const text = s.current && (s.current.text || s.current.partial_text);
+        if (text) $('livePreview').textContent = text;
+        renderRunning();
+      } catch (e) {
+        if (String(e.message).includes('401')) location.href = '/login';
+      }
+    }
+
+    loadAudio();
+    loadTranslation();
+    pollStatus();
+    setInterval(pollStatus, 1500);
+    setInterval(() => { if (busy) loadTranslation(); }, 3000);
+  </script>
+</body>
+</html>

@@ -3,7 +3,9 @@
     "createUpdaterArtifacts": false,
     "licenseFile": "../../LICENSE",
     "useLocalToolsDir": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "resources": {
       "../../dist/engine-windows-x64/church-cap-engine/": "engine/church-cap-engine/"
     },
@@ -16,7 +18,7 @@
         "uninstallerIcon": "installer/windows/installer-icon.ico",
         "uninstallerHeaderImage": "installer/windows/header.bmp",
         "installerHooks": "installer/windows/installer-hooks.nsh",
-        "startMenuFolder": "Church Cap"
+        "startMenuFolder": "Free Live Translator"
       }
     }
   }

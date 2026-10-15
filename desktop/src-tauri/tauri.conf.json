@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Church Cap",
+  "productName": "Free Live Translator",
   "version": "0.8.0",
-  "identifier": "org.churchcap.desktop",
+  "identifier": "io.github.rafitavares.freelivetranslator",
   "build": {
     "frontendDist": "../src"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "control",
-        "title": "Church Cap",
+        "title": "Free Live Translator",
         "width": 780,
         "height": 720,
         "minWidth": 620,
@@ -30,13 +30,17 @@
     "active": true,
     "createUpdaterArtifacts": true,
     "category": "Utility",
-    "copyright": "Copyright © 2026 Church Cap contributors",
+    "copyright": "Copyright © 2026 Church Cap contributors; fork © 2026 Rafael Tavares Coutinho",
     "license": "MIT",
-    "longDescription": "Church Cap provides local live captions through a browser-first interface managed by a native desktop supervisor.",
-    "shortDescription": "Local live captions for churches",
-    "publisher": "Church Cap",
+    "longDescription": "Free Live Translator: legendas e tradução simultânea locais para palestras, baseado no Church Cap.",
+    "shortDescription": "Tradução simultânea local para palestras",
+    "publisher": "Free Live Translator",
     "resources": [],
-    "targets": ["app", "dmg", "nsis"],
+    "targets": [
+      "app",
+      "dmg",
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -49,7 +53,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJGMUUwMjBBNDQ5MDEwOEEKUldTS0VKQkVDZ0lldjl6V1NqYzB2N1A3V2JtbEFqZEI2azIrQ1FrOHRidGQvRDBGTEk4T2I3R08K",
       "endpoints": [
-        "https://raw.githubusercontent.com/Church-Cap/Live-Church-Captions/main/updates/desktop/{{target}}-{{arch}}/latest.json"
+        "https://raw.githubusercontent.com/rafitavares/free_live_translator/main/updates/desktop/{{target}}-{{arch}}/latest.json"
       ],
       "windows": {
         "installMode": "passive"

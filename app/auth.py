@@ -440,7 +440,7 @@ def require_operator(request: Request) -> None:
         }:
             require_operator_mutation(request)
         return
-    if request.url.path == "/operator":
+    if request.url.path in {"/operator", "/simples"}:  # fork: /simples também leva ao login
         raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Operator login required")
 

@@ -7,7 +7,7 @@ APP_VERSION = "0.8.0"
 
 
 class Settings(BaseSettings):
-    app_name: str = "Church Cap"
+    app_name: str = "Free Live Translator"
     # Keep this release number as a literal as well as APP_VERSION. The v0.7.0
     # updater reads this exact field while validating a downloaded release.
     # A regression test keeps both values aligned.
@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     tts_num_threads: int = 2
     tts_provider: str = "cpu"
 
-    church_name: str = "Church Cap"
+    church_name: str = "Free Live Translator"
     dnd_reminder: bool = True
 
     # Operator/admin security. If OPERATOR_PASSWORD is not set, the app

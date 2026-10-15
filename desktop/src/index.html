@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Church Cap</title>
+  <link rel="stylesheet" href="desktop.css?v=0.8.0-desktop-4">
+  <script src="main.js?v=0.8.0-desktop-4" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="brand-lockup">
+        <img class="brand-logo dark-logo" src="assets/church-cap-wide-dark.png" alt="Church Cap">
+        <img class="brand-logo light-logo" src="assets/church-cap-wide-light.png" alt="Church Cap">
+        <span class="desktop-label">Desktop</span>
+      </div>
+      <span class="status-pill" id="headerStatus">Starting</span>
+    </header>
+
+    <nav class="tab-list" aria-label="Church Cap controls">
+      <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-home" data-tab="home">Home</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-settings" data-tab="settings">Settings</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-about" data-tab="about">About</button>
+    </nav>
+
+    <div class="notice error-notice" id="errorNotice" role="alert" hidden>
+      <span id="errorMessage"></span>
+      <button type="button" id="dismissError" aria-label="Dismiss error">×</button>
+    </div>
+
+    <div class="notice live-notice" id="liveNotice" role="status" hidden>
+      <strong>Live captions are active.</strong>
+      <span>Restarting, stopping or quitting will interrupt the service and requires confirmation.</span>
+    </div>
+
+    <section class="tab-panel active" id="panel-home" role="tabpanel" data-panel="home">
+      <article class="hero-card glass-card" aria-labelledby="serviceHeading">
+        <div class="status-orb" id="statusOrb" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">Local caption service</p>
+          <h1 id="serviceHeading">Church Cap is starting</h1>
+          <p class="muted" id="serviceDetail" aria-live="polite">Preparing the browser interface…</p>
+        </div>
+        <button class="primary-action" type="button" id="openOperator">Open Church Cap</button>
+      </article>
+
+      <div class="action-grid" aria-label="Server controls">
+        <button class="action-card" type="button" id="startEngine">
+          <span class="action-icon" aria-hidden="true">▶</span>
+          <span><strong>Start server</strong><small>Start the local caption service</small></span>
+        </button>
+        <button class="action-card" type="button" id="restartEngine">
+          <span class="action-icon" aria-hidden="true">↻</span>
+          <span><strong>Restart server</strong><small>Stops and starts Church Cap safely</small></span>
+        </button>
+        <button class="action-card" type="button" id="stopEngine">
+          <span class="action-icon" aria-hidden="true">■</span>
+          <span><strong>Stop server</strong><small>The menu-bar app remains open</small></span>
+        </button>
+      </div>
+
+      <article class="glass-card browser-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Browser shortcuts</p>
+            <h2>Open a Church Cap view</h2>
+          </div>
+          <span class="mini-status" id="browserAvailability">Waiting for server</span>
+        </div>
+        <div class="browser-grid">
+          <button type="button" data-route="operator"><strong>Operator</strong><small>Manage the live service</small></button>
+          <button type="button" data-route="viewer"><strong>Captions</strong><small>Audience caption view</small></button>
+          <button type="button" data-route="display"><strong>Room Display</strong><small>Projector or confidence screen</small></button>
+          <button type="button" data-route="obs"><strong>OBS</strong><small>Livestream overlay</small></button>
+        </div>
+      </article>
+
+      <details class="glass-card technical-card">
+        <summary>Service details</summary>
+        <dl>
+          <div><dt>Supervisor</dt><dd id="supervisorVersion">v0.8.0</dd></div>
+          <div><dt>Engine</dt><dd id="engineVersion">Not connected</dd></div>
+          <div><dt>Protocol</dt><dd id="protocolVersion">2</dd></div>
+          <div><dt>Process</dt><dd id="enginePid">Not running</dd></div>
+          <div><dt>Browser health</dt><dd id="healthStatus">Waiting</dd></div>
+        </dl>
+      </details>
+    </section>
+
+    <section class="tab-panel" id="panel-settings" role="tabpanel" data-panel="settings" hidden>
+      <article class="glass-card settings-card">
+        <p class="eyebrow">Application</p>
+        <h1>Desktop settings</h1>
+        <div class="setting-row">
+          <div><strong>Start Church Cap at login</strong><small>Opt in on a dedicated church computer.</small></div>
+          <label class="switch" aria-label="Start Church Cap at login"><input type="checkbox" id="startAtLogin" disabled aria-describedby="loginItemStatus"><span></span></label>
+        </div>
+        <p class="availability-note" id="loginItemStatus" aria-live="polite">Checking platform registration…</p>
+      </article>
+
+      <article class="glass-card settings-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">Maintenance</p><h2>Updates and recovery</h2></div>
+          <span class="signed-pill">Signed</span>
+        </div>
+        <div class="maintenance-list">
+          <button type="button" id="checkUpdates"><span><strong>Check for updates</strong><small>Signed application updates from the Church Cap GitHub repository</small></span><span aria-hidden="true">↻</span></button>
+          <button type="button" id="resetOperatorPassword"><span><strong>Reset password or change security mode</strong><small>Reopen account setup to choose how operator access is protected</small></span><span aria-hidden="true">›</span></button>
+          <button type="button" disabled><span><strong>Diagnostics</strong><small>Privacy-aware logs and repair status</small></span><span aria-hidden="true">›</span></button>
+        </div>
+        <div class="setting-row compact-setting-row">
+          <div><strong>Automatically check for updates</strong><small>Opt in to a check when the desktop manager opens. Updates are never installed automatically.</small></div>
+          <label class="switch" aria-label="Automatically check for updates"><input type="checkbox" id="automaticUpdateChecks"><span></span></label>
+        </div>
+        <div class="update-panel" id="updatePanel" role="status" aria-live="polite">
+          <strong id="updateHeading">Application updates</strong>
+          <p id="updateDetail">Church Cap checks a platform-specific signed channel. The local server and browser interface are not replaced unless you approve an available update.</p>
+          <progress id="updateProgress" max="100" value="0" hidden></progress>
+          <details id="updateNotesPanel" hidden><summary>What changed</summary><p id="updateNotes"></p></details>
+          <button type="button" class="primary-action update-install" id="installUpdate" hidden>Download and install</button>
+        </div>
+        <p class="availability-note" id="resetPasswordStatus" aria-live="polite">Account recovery removes the stored operator password, signs out existing operator sessions, and reopens setup so you can create a password and choose a security mode.</p>
+        <p class="availability-note">Diagnostics remain disabled until their narrow native supervisor contract is implemented and tested.</p>
+      </article>
+    </section>
+
+    <section class="tab-panel" id="panel-about" role="tabpanel" data-panel="about" hidden>
+      <article class="glass-card about-card">
+        <img class="about-mark dark-logo" src="assets/church-cap-square-dark.png" alt="">
+        <img class="about-mark light-logo" src="assets/church-cap-square-light.png" alt="">
+        <p class="eyebrow">Church Cap Desktop</p>
+        <h1>Making Church Easier to Follow</h1>
+        <p class="muted">The desktop application keeps the Church Cap server available when browser windows are closed. The full Operator interface remains in your normal web browser.</p>
+        <div class="about-meta"><span>v0.8.0</span><span>MIT licensed</span></div>
+        <p class="small-print">Captions can contain mistakes. A person should monitor important names, safeguarding information and pastoral content.</p>
+        <button type="button" class="legal-button" id="showLegalInformation">Legal information</button>
+      </article>
+    </section>
+
+    <dialog class="legal-dialog" id="legalDialog" aria-labelledby="legalDialogTitle">
+      <div class="legal-dialog-content">
+        <div class="section-heading legal-heading">
+          <div>
+            <p class="eyebrow">Open-source information</p>
+            <h2 id="legalDialogTitle">Church Cap legal information</h2>
+          </div>
+          <form method="dialog"><button type="submit" class="dialog-close" aria-label="Close legal information">×</button></form>
+        </div>
+        <p>Church Cap is free and open-source software published at <strong>github.com/Church-Cap/Live-Church-Captions</strong>.</p>
+        <section>
+          <h3>MIT License</h3>
+          <p>Copyright © 2026 Church Cap contributors.</p>
+          <p>Permission is granted, free of charge, to use, copy, modify, merge, publish, distribute, sublicense and/or sell copies of the software, provided that the copyright and permission notice are retained.</p>
+          <p><strong>The software is provided “as is”, without warranty of any kind.</strong> The authors or copyright holders are not liable for claims, damages or other liability arising from the software or its use.</p>
+        </section>
+        <section>
+          <h3>Important use notice</h3>
+          <p>AI-generated captions can be wrong, delayed, incomplete or misleading. Church Cap is an accessibility aid, not a guarantee of accessibility compliance and not legal, safeguarding, pastoral or medical advice. Each church or organisation remains responsible for its own privacy, safeguarding, copyright, accessibility and data-protection decisions.</p>
+        </section>
+        <section>
+          <h3>Privacy and third-party notices</h3>
+          <p>Church Cap is designed to process captions locally. Transcripts and exported files may still contain sensitive personal information. Optional language, speech and model downloads can have their own licences and attribution requirements; the installed application includes the corresponding third-party notices.</p>
+        </section>
+        <form method="dialog" class="legal-dialog-actions"><button type="submit" class="primary-action">Close</button></form>
+      </div>
+    </dialog>
+
+    <dialog class="legal-dialog reset-dialog" id="passwordResetDialog" aria-labelledby="passwordResetDialogTitle" aria-describedby="passwordResetDialogDescription">
+      <div class="legal-dialog-content">
+        <div class="section-heading legal-heading">
+          <div>
+            <p class="eyebrow">Account recovery</p>
+            <h2 id="passwordResetDialogTitle">Reset password or change security mode?</h2>
+          </div>
+          <form method="dialog"><button type="submit" class="dialog-close" aria-label="Cancel password reset">×</button></form>
+        </div>
+        <p id="passwordResetDialogDescription">Church Cap will stop its local server, remove the stored operator password, sign out existing operator sessions, restart, and open account setup. You will create a new password there and can keep or change the current security mode.</p>
+        <section>
+          <h3>What does the security mode change?</h3>
+          <p>The security mode controls where the operator controls can be reached. It does not remove language resources, models, captions settings, or other Church Cap data.</p>
+          <ul class="security-mode-summary">
+            <li><strong>Secure operator mode — recommended:</strong> audience captions remain available on the local network, while operator controls are intended for the Church Cap computer.</li>
+            <li><strong>Easy offline mode:</strong> audience captions and operator controls are available on the local network. This is convenient for testing, but less isolated.</li>
+            <li><strong>Managed-device HTTPS mode:</strong> intended for church-owned devices where a local certificate authority has already been installed and trusted.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Your Church Cap settings are kept</h3>
+          <p>Only the operator sign-in credentials are reset. Language resources, application settings and other Church Cap data remain in place.</p>
+        </section>
+        <p class="reset-warning"><strong>This cannot be undone.</strong> Even if you only want to change the security mode, you will need to create a new operator password before signing in again.</p>
+        <div class="reset-dialog-actions">
+          <form method="dialog"><button type="submit">Cancel</button></form>
+          <button type="button" class="danger-action" id="confirmPasswordReset">Continue to account setup</button>
+        </div>
+      </div>
+    </dialog>
+
+    <footer>
+      <span>Closing this window keeps Church Cap available from the menu bar or system tray.</span>
+      <button type="button" id="quitApplication">Quit Church Cap</button>
+    </footer>
+  </main>
+</body>
+</html>

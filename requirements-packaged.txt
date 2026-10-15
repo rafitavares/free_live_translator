@@ -1,0 +1,14 @@
+# Complete executable runtime used by the initial signed-desktop feasibility build.
+# Model weights remain external per-user resources and are not bundled here.
+-r requirements.txt
+-r requirements-translation.txt
+-r requirements-tts.txt
+
+# The packaged runtime cannot add Python modules to its signed application
+# bundle later. Keep the optional translation installers available in the
+# frozen engine while model weights remain per-user downloads.
+transformers==4.57.6
+safetensors==0.8.0
+
+# Build-only dependency. Keep this exact for reproducible spike evidence.
+pyinstaller==6.21.0

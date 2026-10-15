@@ -1,0 +1,50 @@
+# category|priority|term
+#
+# Category weights in the bounded live prompt:
+# theology 35%, biblical names 30%, Bible books/places 25%, phrases 10%.
+# Higher numbers are considered first within a category.
+theology|100|Messiah
+theology|98|resurrection
+theology|96|atonement
+theology|94|covenant
+theology|92|redemption
+theology|90|justification
+theology|88|sanctification
+theology|86|Trinity
+theology|84|incarnation
+theology|82|propitiation
+theology|80|reconciliation
+theology|78|grace
+biblical_names|100|Nebuchadnezzar
+biblical_names|98|Melchizedek
+biblical_names|96|Mephibosheth
+biblical_names|94|Zacchaeus
+biblical_names|92|Bartimaeus
+biblical_names|90|Bartholomew
+biblical_names|88|Onesimus
+biblical_names|86|Nicodemus
+biblical_names|84|Jeroboam
+biblical_names|82|Rehoboam
+bible_books_places|100|Deuteronomy
+bible_books_places|98|Ecclesiastes
+bible_books_places|96|Habakkuk
+bible_books_places|94|Zephaniah
+bible_books_places|92|Zechariah
+bible_books_places|90|Philippians
+bible_books_places|88|Colossians
+bible_books_places|86|Philemon
+bible_books_places|84|Gethsemane
+bible_books_places|82|Golgotha
+bible_books_places|80|Capernaum
+bible_books_places|78|Galilee
+christian_phrases|100|Great Commission
+christian_phrases|98|Lord's Prayer
+christian_phrases|96|Sermon on the Mount
+christian_phrases|94|Ten Commandments
+christian_phrases|92|Old Testament
+christian_phrases|90|New Testament
+christian_phrases|88|Book of Revelation
+christian_phrases|86|Gospel according to Matthew
+christian_phrases|84|Gospel according to Mark
+christian_phrases|82|Gospel according to Luke
+christian_phrases|80|Gospel according to John

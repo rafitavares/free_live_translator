@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feedback - {{ church_name }}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="auth-page glass-page">
+  <main class="auth-shell docs-shell">
+    <section class="auth-card glass-card docs-card feedback-card">
+      <p class="eyebrow">Church Cap feedback</p>
+      <h1>Share feedback, features, and issues</h1>
+      <p class="muted">Please email the Church Cap team with anything that would make the app easier, clearer, safer, or more useful for churches.</p>
+
+      <section class="feedback-panel">
+        <h2>Helpful things to include</h2>
+        <ul class="simple-list">
+          <li>Church Cap version: <strong>{{ app_version_label }}</strong></li>
+          <li>Computer type, such as Mac mini, Windows laptop, or Linux server/desktop.</li>
+          <li>Operating system version.</li>
+          <li>Whether you were using CPU, NVIDIA GPU/CUDA, or Apple Silicon.</li>
+          <li>What you expected to happen and what actually happened.</li>
+          <li>Any error text shown in the terminal, operator page, or caption box.</li>
+          <li>Feature ideas, setup confusion, accessibility feedback, or translation/caption accuracy notes.</li>
+        </ul>
+      </section>
+
+      <section class="feedback-panel">
+        <h2>Diagnostics for support</h2>
+        <p class="muted">Diagnostics are available for macOS, Windows, and Linux. They can include Church Cap version, OS version, CPU details, memory size, project drive capacity/free space, Python version, performance settings, CUDA/Apple runtime status, recent runtime metrics, and recent updater/CUDA logs with local paths redacted.</p>
+        <div class="warning-panel slim-warning">
+          <strong>Review before sharing.</strong>
+          <p class="muted">Diagnostics do not include audio, transcripts, captions, translated wording, passwords, secrets, or <code>.env</code> contents, but system names, device names, error messages, and log details may be sensitive to your church or computer. Do not post the file publicly on GitHub unless you have reviewed it and are comfortable sharing it.</p>
+        </div>
+        <div class="button-row">
+          <button type="button" class="secondary-button" onclick="downloadDiagnosticsWithConsent()">Download diagnostics</button>
+          <a class="button-link secondary" href="/operator#diagnostics">Open Diagnostics menu</a>
+        </div>
+      </section>
+
+      <section class="feedback-panel">
+        <h2>Email address</h2>
+        <p class="feedback-email"><a href="mailto:{{ feedback_email }}">{{ feedback_email }}</a></p>
+        <div class="button-row">
+          <a class="button-link primary-button" href="mailto:{{ feedback_email }}?subject=Church%20Cap%20feedback%20{{ app_version_label }}&body=Church%20Cap%20version%3A%20{{ app_version_label }}%0AComputer%2FOS%3A%20%0AAudio%20interface%3A%20%0AAttached%20diagnostics%3A%20yes%2Fno%0AWhat%20happened%3A%20%0AWhat%20I%20expected%3A%20%0AOther%20notes%3A%20">Email feedback</a>
+          <a class="button-link secondary" href="/operator">Back to operator</a>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script>
+    function downloadDiagnosticsWithConsent() {
+      const ok = window.confirm(
+        'Download diagnostics for support?\n\nThis file can include Church Cap version, OS version, CPU details, memory size, performance settings, privacy-safe numeric service measurements, and recent updater/CUDA logs with local paths redacted. It does not include audio, transcripts, captions, translated wording, passwords, secrets, or .env contents. Review it before sharing, and do not post it publicly on GitHub unless you are comfortable with the contents.'
+      );
+      if (ok) window.location.href = '/api/diagnostics/export?confirmed=1';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Church Cap · Live captions</title>
+  <link rel="icon" type="image/png" href="/static/branding/church-cap-square-dark.png">
+  <link rel="stylesheet" href="/static/styles.css?v=0.8.0-ui-1">
+</head>
+<body class="phone-page glass-page">
+  <main class="phone-shell glass-shell">
+    <header class="topbar phone-topbar glass-topbar">
+      <div>
+        <p class="eyebrow">Church Cap</p>
+        <h1 data-i18n="live_captions">Live captions</h1>
+      </div>
+      <div class="topbar-actions">
+        <div class="language-picker" aria-label="Caption language" data-i18n-aria-label="caption_language">
+          <button id="languagePickerButton" class="language-picker-button" type="button" aria-haspopup="dialog" aria-expanded="false">
+            <span id="languageFlag" class="language-flag-chip" data-code="EN" title="English · EN"><img src="/static/flags/4x3/gb.svg" alt="" decoding="async"></span>
+            <span id="languagePickerLabel">English</span>
+          </button>
+          <select id="languageSelect" class="sr-only" aria-hidden="true" tabindex="-1">
+            {% for lang in languages %}
+            <option value="{{ lang.code }}" data-flag="{{ lang.flag }}" data-dir="{{ lang.dir }}" data-name="{{ lang.name }}" data-native="{{ lang.native }}">{{ lang.native }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <span id="connection" class="status-pill" data-i18n="connecting">Connecting</span>
+      </div>
+    </header>
+
+    <div id="languagePickerOverlay" class="language-picker-overlay" hidden>
+      <div class="language-picker-backdrop" id="languagePickerBackdrop"></div>
+      <section class="language-picker-dialog glass-card" role="dialog" aria-modal="true" aria-labelledby="languagePickerTitle">
+        <div class="language-picker-dialog-head">
+          <h2 id="languagePickerTitle" data-i18n="choose_language">Choose language</h2>
+          <button id="languagePickerClose" type="button" class="notice-close" aria-label="Close language picker" data-i18n-aria-label="close_language_picker">×</button>
+        </div>
+        <input id="languageSearch" class="language-search" type="search" placeholder="Search languages" autocomplete="off" data-i18n-placeholder="search_languages" data-i18n-aria-label="search_languages">
+        <div id="languageList" class="language-list" role="listbox" aria-label="Available caption languages" data-i18n-aria-label="available_caption_languages"></div>
+      </section>
+    </div>
+
+    {% if dnd_reminder %}
+    <section class="notice compact-notice glass-card viewer-notice" id="dndNotice" data-viewer-notice>
+      <button class="notice-close" aria-label="Dismiss reminder" data-i18n-aria-label="dismiss_reminder" data-dismiss-viewer-notice="remove">×</button>
+      <strong data-i18n="dnd_title">Do Not Disturb</strong>
+      <p data-i18n="dnd_text">Consider turning on Do Not Disturb so notifications do not distract you and you can focus on the Word of God.</p>
+    </section>
+    {% endif %}
+
+    <section class="notice compact-notice accuracy-notice glass-card viewer-notice" id="accuracyNotice" data-viewer-notice>
+      <button class="notice-close" aria-label="Dismiss accuracy notice" data-i18n-aria-label="dismiss_accuracy_notice" data-dismiss-viewer-notice="remove">×</button>
+      <strong data-i18n="ai_notice_title">AI caption notice</strong>
+      <p data-i18n="ai_notice_text">Captions are generated automatically and may be inaccurate at times. Please check with the speaker or church team if something seems unclear.</p>
+    </section>
+
+    <section class="notice compact-notice translation-notice glass-card viewer-notice" id="translationNotice" data-viewer-notice hidden>
+      <button class="notice-close" aria-label="Dismiss translation notice" data-i18n-aria-label="dismiss_translation_notice" data-dismiss-viewer-notice="hide">×</button>
+      <strong data-i18n="translation_notice_title">Experimental translation</strong>
+      <p data-i18n="translation_notice_text">Translated captions are experimental and may be inaccurate or unavailable. Scripture, names, theology, and pastoral details should be checked with the church team.</p>
+    </section>
+
+    <section class="caption-card live-card glass-card" aria-live="polite" aria-atomic="false">
+      <div class="caption-label-row">
+        <span class="caption-label" data-i18n="current">Live</span>
+        <div class="caption-label-actions">
+          <span id="viewerHint" class="caption-hint" data-i18n="line_by_line">Bottom-to-top caption stream</span>
+          <button id="translationAudioToggle" class="translation-audio-toggle" type="button" hidden aria-pressed="false" data-i18n-aria-label="listen_translation">
+            <span aria-hidden="true">🎧</span>
+            <span id="translationAudioLabel" data-i18n="listen_translation">Listen</span>
+          </button>
+        </div>
+      </div>
+      <div id="currentCaption" class="current-caption compact-current" data-i18n="waiting">Waiting for captions…</div>
+      <p id="captionLoadNotice" class="caption-load-notice" data-i18n="connecting" hidden>Connecting</p>
+      <p id="translationAudioStatus" class="translation-audio-status" role="status" aria-live="polite" hidden></p>
+      <audio id="translationAudioPlayer" class="sr-only" preload="none" playsinline aria-hidden="true"></audio>
+    </section>
+
+    <section class="controls compact-controls glass-card" aria-label="Caption controls" data-i18n-aria-label="caption_controls">
+      <button id="smallerText" type="button">A−</button>
+      <button id="largerText" type="button">A+</button>
+      <button id="toggleTheme" type="button" data-i18n="theme">Theme</button>
+      <button id="toggleCompact" type="button" data-i18n="comfort">Comfort</button>
+      <button id="toggleTranscript" type="button" data-i18n="show_transcript" aria-expanded="false" aria-controls="historyWrap">Show transcript</button>
+      <button id="pauseScroll" type="button" data-i18n="pause">Pause</button>
+      <button id="clearLocal" type="button" data-i18n="clear">Clear</button>
+    </section>
+
+    <section class="history-wrap compact-history-wrap glass-card" id="historyWrap" hidden>
+      <div class="caption-label-row">
+        <h2 data-i18n="recent_captions">Session transcript</h2>
+        <span class="caption-hint" data-i18n="history_log_hint">Newest at top · scroll for earlier</span>
+      </div>
+      <div id="history" class="history dense-history"></div>
+    </section>
+
+    <footer class="subtle-product-footer">
+      <a href="https://www.churchcap.org" target="_blank" rel="noopener noreferrer">www.churchcap.org</a>
+      <span>{{ app_version_label }}</span>
+    </footer>
+  </main>
+  <script>
+    window.CC_LANGUAGES = {{ languages | tojson }};
+    window.CC_UI_STRINGS = {{ ui_strings | tojson }};
+    window.CC_UI_STRING_SOURCES = {{ ui_string_sources | tojson }};
+    window.CC_TRANSLATION_STATE = {{ translation_state | tojson }};
+  </script>
+  <script src="/static/client.js?v=0.8.0-ui-1"></script>
+</body>
+</html>

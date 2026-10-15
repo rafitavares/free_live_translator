@@ -1,0 +1,11 @@
+{
+  "bundle": {
+    "resources": {
+      "../../dist/engine-macos-arm64/church-cap-engine/": "engine/church-cap-engine/"
+    },
+    "macOS": {
+      "minimumSystemVersion": "13.0",
+      "infoPlist": "Info.plist"
+    }
+  }
+}

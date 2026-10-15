@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+	<!-- Required only by the optional original OpenAI Whisper backend's
+	     Numba/LLVM allocator; scoped to the embedded engine executable. -->
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
+	<!-- Ad-hoc signatures have no shared Apple Team ID. This exception exists
+	     only so locally sealed internal builds can load their embedded Python
+	     runtime. Production signing must never use this entitlement file. -->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+</dict>
+</plist>

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Church Cap Preview",
+  "identifier": "org.churchcap.desktop.preview",
+  "app": {
+    "windows": [
+      {
+        "label": "control",
+        "title": "Church Cap Preview",
+        "width": 780,
+        "height": 720,
+        "minWidth": 620,
+        "minHeight": 560,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": true
+      }
+    ]
+  },
+  "bundle": {
+    "createUpdaterArtifacts": false,
+    "targets": ["app"]
+  }
+}

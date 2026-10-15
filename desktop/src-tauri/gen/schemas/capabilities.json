@@ -1,0 +1,1 @@
+{"control-window":{"identifier":"control-window","description":"Minimal capability for the Church Cap control window. Process and URL operations remain Rust-owned.","local":true,"windows":["control"],"permissions":["core:default"]}}

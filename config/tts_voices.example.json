@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "description": "Copy this file to the Church Cap data directory under tts/voices.json after installing and reviewing local voice packs. Paths are relative to that tts folder.",
+  "voices": [
+    {
+      "enabled": false,
+      "language": "fa",
+      "spoken_locale": "fa-IR",
+      "engine": "vits",
+      "model": "voices/fa/model.onnx",
+      "tokens": "voices/fa/tokens.txt",
+      "data_dir": "voices/espeak-ng-data",
+      "lexicon": "",
+      "speaker_id": 0,
+      "speed": 1.0,
+      "license_id": "REPLACE-WITH-VERIFIED-SPDX-ID",
+      "source_url": "https://example.invalid/replace-with-the-official-model-card",
+      "commercial_use_approved": false
+    },
+    {
+      "enabled": false,
+      "language": "zh-hans",
+      "spoken_locale": "cmn-CN",
+      "engine": "kokoro",
+      "model": "voices/kokoro/model.onnx",
+      "voices": "voices/kokoro/voices.bin",
+      "tokens": "voices/kokoro/tokens.txt",
+      "data_dir": "voices/kokoro/espeak-ng-data",
+      "lexicon": "voices/kokoro/lexicon-zh.txt",
+      "speaker_id": 0,
+      "speed": 1.0,
+      "license_id": "Apache-2.0",
+      "source_url": "https://huggingface.co/hexgrad/Kokoro-82M",
+      "commercial_use_approved": false
+    }
+  ]
+}

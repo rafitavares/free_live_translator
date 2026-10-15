@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Church Cap",
+  "version": "0.8.0",
+  "identifier": "org.churchcap.desktop",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "control",
+        "title": "Church Cap",
+        "width": 780,
+        "height": 720,
+        "minWidth": 620,
+        "minHeight": 560,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset:; style-src 'self'; script-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "category": "Utility",
+    "copyright": "Copyright © 2026 Church Cap contributors",
+    "license": "MIT",
+    "longDescription": "Church Cap provides local live captions through a browser-first interface managed by a native desktop supervisor.",
+    "shortDescription": "Local live captions for churches",
+    "publisher": "Church Cap",
+    "resources": [],
+    "targets": ["app", "dmg", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJGMUUwMjBBNDQ5MDEwOEEKUldTS0VKQkVDZ0lldjl6V1NqYzB2N1A3V2JtbEFqZEI2azIrQ1FrOHRidGQvRDBGTEk4T2I3R08K",
+      "endpoints": [
+        "https://raw.githubusercontent.com/Church-Cap/Live-Church-Captions/main/updates/desktop/{{target}}-{{arch}}/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

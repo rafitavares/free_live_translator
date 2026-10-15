@@ -1,0 +1,4 @@
+# Optional translated-caption speech for Church Cap v0.7.6.
+# Install only when local translated audio is required.
+sherpa-onnx==1.13.2
+OpenCC==1.4.1

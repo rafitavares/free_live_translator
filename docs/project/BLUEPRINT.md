@@ -1,0 +1,409 @@
+# Church Cap Blueprint
+
+Church Cap is an open-source, local-first live caption application for churches. It listens to one audio input, transcribes speech locally, and publishes captions to phones, tablets, room displays, and OBS browser sources over the local network.
+
+This document describes the current browser-first architecture.
+
+## Current Release
+
+Version: `v0.8.0`
+
+Status: release candidate. The final Apple Silicon macOS and Windows x64 applications have passed project-owner clean-machine testing. Church Cap is open-source software, not a compliance-certified service, and churches remain responsible for their own privacy, safeguarding, accessibility, copyright, and operational policies.
+
+## Deployment Model
+
+Church Cap v0.8.0 adds a modular desktop distribution layer around the shared FastAPI application and browser UI. A stable dual-port engine entry point, typed source/packaged platform contracts, immutable resource boundary, and thin native supervisor provide lifecycle, recovery, update, and installer integration without forking the caption product. Deterministic Service Context and optional translated audio remain part of the shared browser application.
+
+Translated audio is an optional accessibility layer, not a replacement for captions. Operators choose, install, check and enable it from **Languages → Spoken translated audio**. Normal setup downloads no voice weights; the GUI shows per-pack and selected-total size estimates before an authenticated operator starts installation while captions are stopped. It remains disabled when no reviewed voice pack is installed, never appears for English, is suppressed during Sensitive moment mode, and does not store generated audio or translated wording. Audience playback uses one explicitly activated HTML media element so mobile browsers can retain playback permission and expose native media controls where supported. Invalid or silent generated samples are not delivered. See [Local translated audio](../translated-audio.md) and [Optional Spoken-Language Model Notices](../legal/SPOKEN_LANGUAGE_MODELS.md).
+
+Profiles:
+
+- `desktop`: full open-source PC, Mac, and Linux experience.
+- `appliance_cpu`: Church Cap Box CPU profile, streamlined for English captions. Language options remain accessible as an advanced operator choice, show a CPU warning before use, and are capped at three active translated languages.
+- `appliance_gpu`: Church Cap Box GPU profile, streamlined with multilingual controls gated by CUDA readiness.
+
+This keeps one codebase while allowing the appliance shell, kiosk setup, and updater to present a simpler product surface.
+
+Roadmap detail: [ROADMAP_TO_V1.md](ROADMAP_TO_V1.md).
+
+v0.8.0 implementation record: [V0.8.0_IMPLEMENTATION.md](V0.8.0_IMPLEMENTATION.md). Cross-platform boundaries: [CROSS_PLATFORM_ARCHITECTURE.md](CROSS_PLATFORM_ARCHITECTURE.md). Release procedure: [DESKTOP_UPDATE_RELEASE_RUNBOOK.md](DESKTOP_UPDATE_RELEASE_RUNBOOK.md).
+
+The current product retains the shared Room Display/OBS presentation policy, focused security and translation-installation hardening, and the optional translated-audio layer. Service metrics use schema 12 for privacy-safe audio-callback recovery counts and schema 13 for text-free Service Context mode, hint, prompt-token, reference, and correction counts. TTS readiness and text-free queue/latency state remain available only through authenticated diagnostics.
+
+## Project Goals
+
+- Improve accessibility for Deaf and hard-of-hearing people in church settings.
+- Keep the core captioning workflow local-first and usable without cloud hosting.
+- Let visitors scan a QR code and read captions without installing an app.
+- Protect operator controls behind a password.
+- Provide practical privacy and safeguarding controls for churches.
+- Keep the project approachable for open-source contributors.
+
+## Core Workflow
+
+```text
+Church microphones
+  -> sound desk / mixer / audio interface
+  -> Church Cap server running locally
+  -> local speech-to-text engine
+  -> temporary correction, layered glossary and Bible-reference formatting
+  -> optional caption-safety filter
+  -> optional local translation
+  -> WebSocket caption broadcast
+  -> phones, tablets, display screens, and OBS
+```
+
+## Main Pages
+
+- `/` — public mobile/tablet caption viewer.
+- `/operator` — password-protected operator dashboard.
+- `/display` — large-screen caption display using the shared polished two-line presentation renderer.
+- `/obs` — transparent OBS browser-source overlay using the same polished two-line presentation renderer and wrapping width as Room Display.
+- `/obs/help` — operator-only OBS setup guide.
+- `/setup/network` — operator-only local network and hostname guide.
+- `/docs/privacy` — operator-only privacy notes.
+- `/docs/church-notice` — operator-only suggested church notice wording.
+- `/docs/disclaimer` — operator-only disclaimer notes.
+- Operator **Diagnostics** section — operator-only local support export with confirmation, system specs, runtime status, metrics, and redacted updater/CUDA logs.
+- Diagnostics include audio-callback stall, stream-restart, and failed-restart counts in service-metrics schema 12, plus text-free Service Context comparison fields in schema 13. Schema 9, 10, 11, and 12 summaries remain readable after upgrade. The broader diagnostics export also includes the redacted update log, which the update-failure panel directs operators to download. Reports contain numeric counts, bounded non-identifying modes, and distributions only; they never retain audio, recognition spans, word times or confidence, device metadata, captions, translations, transcripts, sermon notes, context terms, glossary contents, paths, network identifiers, or operator data.
+- Operator **Updates** section — operator-only GitHub release-tag check, confirmation, integrity-checked in-place update, rollback backup, restart, and reconnect flow.
+- `/service-leader` — restricted service-leader controls reached through a one-use QR pairing flow on the operator port.
+- `/api/diagnostics/export` — local diagnostics JSON export, operator login and local computer required.
+- `/api/diagnostics/download-handoff` — temporary diagnostics handoff QR for appliance support, operator login and local computer required.
+
+## Main Components
+
+### FastAPI Server
+
+The server handles routing, templates, WebSocket connections, API controls, caption state, current-session transcript exports, restricted Service Leader exports, and operator authentication.
+
+Key files:
+
+```text
+app/main.py
+app/settings.py
+app/auth.py
+app/broadcast.py
+app/transcript_store.py
+app/runtime_config.py
+app/exporting.py
+```
+
+### Audio And Transcription
+
+The transcription layer supports standard local OpenAI Whisper and the lower-latency `faster-whisper` backend. Both use a rolling-window approach with partial and final captions. The operator dashboard includes performance presets and advanced controls so churches can choose between lower delay and higher accuracy without editing `.env`.
+
+Performance settings are stored in `runtime_config.json` in the per-user data folder. Saved operator settings override matching `.env` defaults when a new caption session starts. Existing sessions keep their loaded model and stream settings until captions are stopped and started again. The operator dashboard locks performance controls while captions are live so the loaded model, backend, and audio stream cannot be changed mid-session.
+
+Key files:
+
+```text
+app/transcription/whisper_live.py
+app/transcription/faster_whisper_live.py
+app/transcription/base.py
+app/hardware.py
+app/runtime_config.py
+```
+
+### Caption Cleanup
+
+Caption text can be corrected with a simple CSV glossary and masked with the bad-word censor before it is shown, translated, stored, or exported.
+
+Key files:
+
+```text
+app/glossary.py
+app/profanity_filter.py
+config/glossary.csv
+config/profanity_filter.txt
+```
+
+### Caption Broadcast
+
+Captions are transcribed once, then broadcast to connected clients using WebSockets. This avoids running transcription per viewer. Raw English is sent immediately and does not wait for translation. `SourceUnitBuilder` also turns rolling hypotheses into stable draft revisions and final units: the English payload exposes those updates to fill its accumulated Live reader, while translated viewers use the same source-unit stream as translation input. `BoundedFairTranslationScheduler` keeps a bounded queue per language, coalesces replaceable drafts, preserves completed units, drops drafts before finals under pressure, and rotates between languages. The broadcast layer separately maintains the retained session transcript.
+
+Key file:
+
+```text
+app/broadcast.py
+app/source_units.py
+app/translation_scheduler.py
+app/transcript_store.py
+```
+
+### Client Viewer
+
+The public caption viewer is designed for phones and tablets. It uses a start-aligned, bottom-to-top caption stream: captions read from the left edge in left-to-right languages, wrap naturally, and use the available caption box from the bottom upward as new lines arrive. This avoids a middle-of-the-box caption feel and gives viewers a stable reading surface. English and translated captions both accumulate in this scrollable Live reader. The first cue draft appears immediately; subsequent revisions update that cue in place until the server seals it. The display and OBS pages reuse this rendering model with a constrained two-line presentation layout, so new words enter subtly and existing lines glide rather than snapping around the screen. If no confirmed caption is available yet, it shows the mutable cue so continuous speech does not leave viewers on the waiting screen. It includes an optional server-backed, scrollable, timestamped session transcript for the current app session with newest captions first, export controls with privacy warnings, font controls, automatic system light/dark theme with local override, transcript show/hide, pause/clear controls, lightweight UI language selection from `app/locales/client_ui.json`, a stable in-card language-loading notice for active language switches, AI accuracy notices, and optional translated-caption routing. The Session transcript starts closed on each viewer-page visit so Live initially receives the available space. Sensitive moment mode discards captions and transcript drafts while blanked, resets live transcription buffers, and briefly drops captions after resume so private speech is not retained or exported. A new app start keeps the visible transcript empty while pruning any saved local cache according to the retention window stored with that cache. On phone and tablet landscape viewports, the viewer uses a compact side-by-side layout so the live caption feed takes about 75% of the width while the transcript remains available when enabled; transcript history scrolls inside its panel so it does not push the live feed down, and hiding the transcript lets the live feed use the full width.
+
+Key files:
+
+```text
+app/templates/captions.html
+app/static/client.js
+app/static/styles.css
+```
+
+### Operator Dashboard
+
+The operator dashboard includes:
+
+- start/stop captions
+- audio input selection
+- performance presets for faster/lower-accuracy through slower/higher-accuracy captioning
+- advanced transcription tuning for backend, model size, CPU/GPU, compute type, refresh interval, listening window, silence timing, stability checks, and beam size
+- microphone level monitor
+- source caption preview
+- sensitive blank/pause mode
+- QR codes and audience links
+- clearly separated Room display and OBS output links
+- appliance safeguard prompt before opening clean output pages from the kiosk
+- translation controls
+- bad-word censor controls
+- transcript retention controls and a local transcript-folder reveal action
+- **Diagnostics → Support** exports with confirmation and privacy wording
+- **Diagnostics → Application Storage** for on-demand storage accounting and guarded cleanup
+- account/password controls
+- one-use QR pairing and revocation for restricted service-leader devices
+
+### Service Leader Controls
+
+The service-leader page is a separate least-privilege, denomination-neutral role. Pairing begins locally either from the login page with the existing operator password or from the authenticated **Service Leader** operator section. A 90-second single-use token is exchanged for a server-side session with a four-hour absolute timeout and two-hour idle timeout.
+
+The operator section reports active sessions and pairing-window state, generates or replaces the pairing QR, cancels unused pairing codes, and revokes established sessions. The restricted role can start/stop captions, blank/resume sensitive mode, change audio input while stopped, view benchmark-derived health, share audience QR codes through a temporary phone-download QR, export current-session TXT/VTT transcripts after a warning, share redacted support logs after a warning, request languages that are installed but not currently enabled, and manage translated captions with Automatic or Manual language availability using already-supported translation languages. Operator and service-leader controls share active-state feedback with subtle glows and concise action notices, so state changes made on either page are reflected on the other during normal status refresh. Its caption preview observes the live caption WebSocket without being counted as an audience viewer. It cannot access the full operator dashboard, full transcript export formats, performance configuration, unrestricted diagnostics, updates, credentials, account/privacy settings, or model installation.
+
+Key files:
+
+```text
+app/service_leader_auth.py
+app/templates/service_leader.html
+app/templates/service_leader_pair.html
+app/templates/service_leader_pairing.html
+```
+
+Key file:
+
+```text
+app/templates/operator.html
+```
+
+### Translation
+
+Translation support is experimental. Phone UI language selection is separate from caption translation. Caption translation can use the Recommended package / CTranslate2 INT8 SMaLL-100, Base package / Argos Translate, Compatibility package / PyTorch SMaLL-100, or Auto. Translated work consumes stable cue revisions through independent language queues. Older revisions of the same cue are coalesced or rejected as stale; unrelated sealed cues remain durable unless an explicit privacy action clears the session. Responsive Context retranslates the stable prefix of the current English cue after a short debounce and meaningful word growth; the full final wording updates that same cue. It does not wait for previous completed thoughts. Simplified and Hong Kong Traditional Chinese remain separate and OpenCC applies deterministic script conversion after provider output.
+
+Key files:
+
+```text
+app/i18n.py
+app/localisation.py
+app/locales/client_ui.json
+app/broadcast.py
+app/source_units.py
+app/translation_scheduler.py
+scripts/install-translation-models-argos.sh
+scripts/install-translation-models-argos.ps1
+requirements-translation.txt
+docs/translation.md
+```
+
+## Local-First Security Model
+
+The default macOS, Windows, and Linux start scripts run in dual-port mode:
+
+```text
+Viewer port:   8080
+Operator port: 9090
+```
+
+The viewer port is intended for public read-only caption pages:
+
+```text
+/
+/display
+/obs
+/qr.png
+/qr-ip.png
+/api/languages
+/ws/captions
+```
+
+The operator port is intended for password-protected controls, transcript exports, operator documentation, and the restricted `/service-leader` role. When localhost lock is enabled, full operator routes are served only to the local machine; remote clients can reach only paired service-leader paths and static assets.
+
+Recommended controls:
+
+- Do not port-forward Church Cap to the internet.
+- Use a strong operator password.
+- Keep the public caption page read-only.
+- Keep operator controls password-protected and localhost-focused.
+- Use guest Wi-Fi rules where possible so guests can access only the viewer port.
+- Keep transcript saving off or limited where appropriate.
+- Use sensitive blank/pause mode for private or pastoral moments.
+- Review transcripts before publishing them.
+
+## Runtime Data
+
+Operator authentication and runtime settings are stored in a stable per-user data directory, not only inside the extracted project folder.
+
+On macOS:
+
+```text
+~/Library/Application Support/Church Cap/data/operator_auth.json
+~/Library/Application Support/Church Cap/data/operator_auth.backup.json
+~/Library/Application Support/Church Cap/data/runtime_config.json
+```
+
+On Windows:
+
+```text
+%APPDATA%\Church Cap\data\operator_auth.json
+%APPDATA%\Church Cap\data\operator_auth.backup.json
+%APPDATA%\Church Cap\data\runtime_config.json
+```
+
+On Linux:
+
+```text
+~/.local/share/church-cap/data/operator_auth.json
+~/.local/share/church-cap/data/operator_auth.backup.json
+~/.local/share/church-cap/data/runtime_config.json
+```
+
+The operator password is stored as a salted PBKDF2 hash. The session secret is stored locally because it is needed to verify signed session cookies. The backup auth file is written from the same data so the app can recover if the primary auth file is lost, corrupted, or left incomplete. These files must not be committed to GitHub.
+
+Runtime settings include the selected audio input, transcript retention, translation, profanity filter, security mode, and performance tuning. Performance changes from the operator dashboard are saved automatically while captions are stopped and apply when the next caption session starts.
+
+Older project-local files are migrated from:
+
+```text
+data/operator_auth.json
+data/runtime_config.json
+```
+
+when the stable Application Support files do not already exist.
+
+## Privacy And Compliance Notes
+
+Church Cap supports privacy-conscious local captioning, but it does not make a church legally compliant by itself.
+
+Churches should consider:
+
+- UK GDPR / data protection responsibilities.
+- Whether personal data or special category data may appear in captions.
+- Whether transcripts are saved and for how long.
+- Whether notices are displayed telling people that AI captions are being generated.
+- Safeguarding practice for private prayer, testimony, pastoral details, children, or vulnerable adults.
+- Copyright permissions before publishing transcripts, captions, Bible text, worship lyrics, liturgy, poems, or quotations.
+
+See:
+
+```text
+docs/legal/PRIVACY.md
+docs/legal/DISCLAIMER.md
+docs/legal/NOTICE_TEMPLATE_FOR_CHURCHES.md
+docs/security_privacy_networking.md
+```
+
+## GitHub Launch Checklist
+
+Before publishing the repository publicly:
+
+- Confirm `.env`, `.venv/`, `data/`, `certs/`, logs, and local runtime files are not committed.
+- Confirm `.gitignore` is present.
+- Confirm `LICENSE` is present.
+- Confirm `README.md` gives a clear quick start.
+- Confirm `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, and `.github/CODE_OF_CONDUCT.md` are present.
+- Confirm issue and pull request templates are present.
+- Confirm `docs/legal/THIRD_PARTY_NOTICES.md` lists exact direct dependency versions and model/distribution notes.
+- Confirm dependency versions are pinned in `requirements.txt` and `requirements-translation.txt`.
+- Confirm scripts are executable:
+  - `setup-macos.sh`
+  - `start-macos.sh`
+  - `start-macos-https.sh`
+  - `setup-linux.sh`
+  - `start-linux.sh`
+  - `update-linux.sh`
+  - `reset-operator-password.sh`
+  - `fix-permissions.sh`
+  - `update-macos.sh`
+  - `scripts/*.sh`
+  - `scripts/*.py`
+  - Windows `.cmd` launchers are present for setup, start, password reset, update, and optional CUDA runtime force reinstall.
+- Confirm Linux package detection remains isolated in `scripts/linux-system-packages.sh` and works with `apt`, `dnf`/`yum`, `zypper`, `pacman`, and `apk`.
+- Confirm updater scripts preserve `.env`, `.venv`, `data/`, `logs/`, `certs/`, and local config while keeping the displayed version code-owned and refreshing only safe app-owned defaults.
+- Confirm updater scripts validate downloaded ZIPs, required release files, release version, staged Python syntax, and SHA-256 installed-file checksums before reporting success.
+
+If permissions are lost in a copied or unzipped folder, users can run:
+
+```bash
+bash fix-permissions.sh
+```
+
+## v0.6.1 Translation Performance Track
+
+v0.6.1 is the measurement release before contextual translation changes. Starting captions creates a random non-identifying run ID and an atomic active marker, then seeds language demand from audience viewers who joined before Start. Stopping captions finalises an allow-listed summary; the latest five summaries persist in the normal per-user data folder across app restarts. An abandoned marker is reported as incomplete without invented measurements. Diagnostics expose current and latest completed services, and a separate anonymised service report excludes host details and logs. Service-metrics schema 2 separates the oldest-frame rolling-window upper bound from the operational English response estimate and records why completed translation work was not published. Metrics are language-agnostic: Farsi and Chinese are pilot validation targets, not hard-coded special cases. Reservoirs are bounded, while aggregate counts, averages and peaks cover the full run. The recorded-sermon helper accepts a local PCM WAV file and sends it in real time to an operator-selected output/loopback device; Church Cap's live audio path remains unchanged and the external-routing limitation is recorded in its privacy-safe manifest.
+
+The efficient translation path improves multilingual performance without splitting the project into separate apps. Recommended / CTranslate2 INT8 SMaLL-100 is the preferred broad-language path. Base / Argos remains available as a local fallback for installed packs. Compatibility / PyTorch SMaLL-100 remains optional for comparison and fallback while conversion quality and latency are benchmarked. AMD ROCm is a research item for Linux appliance experiments, not a supported runtime until detection, setup, diagnostics, fallback, and benchmark results are reliable.
+
+Implementation guardrails:
+
+- keep source English captions responsive even when translated-caption work is slow
+- keep Argos fallback available while adding any CTranslate2-backed provider
+- expose runtime status clearly in diagnostics and the operator language panel
+- do not raise CPU appliance language limits without benchmark evidence
+- do not advertise ROCm support until it is tested on real AMD hardware
+
+## v0.7.0 Streaming Word Timing And Translation Readability, Refined In v0.7.5
+
+v0.7.0 added real Faster-Whisper word alignment and confidence to the server-owned cue lifecycle. v0.7.3 retains its immediate start-to-start cadence and adds layered boundaries: a 350 ms endpoint-analysis tail lets Silero make a 160 ms end-of-speech decision; only 100 ms of acoustic padding remains around detected speech; and a result that began outside the voice grace period cannot replace the last speech-backed wording. Both backends use word timestamps and a 0.5-second hallucination-silence threshold. Church Cap rejects high no-speech, low-average-log-probability, or pathological results before publication. Safe high-confidence words still publish immediately. A weak final word at the captured-audio edge needs a second matching decode **with at least 60 ms of new detected speech**; punctuation and an identical scheduled re-decode are not evidence. v0.7.5 leaves that server cadence intact and applies the existing stable-prefix count to Room Display and OBS before rendering a draft. No additional transcription pass or fixed delay is introduced.
+
+Each translated language has a bounded queue. New revisions coalesce every older job for the same cue, including an obsolete final revision; unrelated sealed cues remain durable. Under pressure, the scheduler removes the oldest draft before a sealed cue, permits sealed-only overflow rather than losing completed speech, and rotates languages round-robin. Queue state is cleared by Sensitive mode and Clear. At Stop, Church Cap waits up to two seconds for outstanding work, then explicitly records and cancels anything remaining. Service-metrics schema 13 retains schema 12's `silero_endpoint_progress_publication_guard_v3`, word-alignment, cadence, cue, translation, speech-bounded-input, trailing-silence, suppression and audio-recovery measurements, then adds the Service Context mode and numeric hint, prompt-token, Bible-reference and correction counts needed for safe A/B comparison. Those fields never retain the words themselves, notes, context terms, audio, caption text, recognition timestamps, confidence values, or translated wording.
+
+The translation foundation exposes Responsive Context, Live, More Stable, `zh-Hans`, and `zh-Hant` for controlled testing. Responsive Context is the recommended default for new configurations: it translates at least three stable English words, normally waits for three more stable words and at least 1.5 seconds before revising, and publishes the final refinement under the same cue identity. Legacy Contextual/Extended settings migrate to Responsive Context, eliminating their two-/four-thought wait. No mode sends provider-specific instructions. SMaLL-100's single `zh` output and Argos `zh`/`zt` output are normalised with Apache-2.0 OpenCC using `t2s` or Hong Kong `s2hk`. Previous-sentence context and Farsi presentation improvements remain pending measured work.
+
+Operator Diagnostics calculates storage only when requested and reports category sizes without returning local paths. Cleanup accepts only current server-generated identifiers for inactive model downloads or archived logs and requires explicit confirmation. Active models, settings, transcripts, retained measurements, and current logs are protected. Church Cap-owned logs rotate at 5 MB with two backups, log-tail reads are byte-bounded, and the benchmark remains operator-started with a capped in-memory sample list.
+
+## Windows Reliability QA Targets
+
+- Test fresh setup on CPU-only Windows and NVIDIA Windows laptops.
+- Confirm the dashboard clearly reports NVIDIA driver detection, CTranslate2 CUDA availability, missing CUDA DLLs, and CPU fallback mode.
+- Confirm **Download diagnostics** names included system specs clearly and excludes transcripts, `.env`, passwords, session secrets, and unredacted local paths.
+- Confirm `setup-windows.cmd`, `start-windows.cmd`, `update-windows.cmd`, and the operator-page update flow work from a clean folder.
+- Revisit minimum and recommended hardware after real service benchmarks from several churches.
+
+## Linux Reliability QA Targets
+
+- Test AlmaLinux and Ubuntu first, then one representative system for the remaining package-manager families.
+- Confirm setup selects Python 3.10 or newer and never installs Python packages globally.
+- Confirm PortAudio can list a USB audio interface and the dual-port start script reports the correct LAN URL.
+- Keep distro-specific package names in one helper rather than adding per-distro application branches.
+
+## Suggested Repository Description
+
+```text
+Open-source, local-first live captions for churches.
+```
+
+## Suggested GitHub Topics
+
+```text
+accessibility
+church
+captions
+deaf-accessibility
+hard-of-hearing
+fastapi
+whisper
+local-first
+assistive-technology
+obs
+```
+
+## Roadmap Ideas
+
+- Better packaged app installer.
+- Operator IP allowlist.
+- Improved local certificate workflow.
+- Better VAD and lower-latency streaming transcription.
+- Better glossary and sermon-notes context.
+- More robust translation provider support.
+- Better signed/packaged update flow.
+- Accessibility testing with Deaf and hard-of-hearing users.

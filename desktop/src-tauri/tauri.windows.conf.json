@@ -1,0 +1,23 @@
+{
+  "bundle": {
+    "createUpdaterArtifacts": false,
+    "licenseFile": "../../LICENSE",
+    "useLocalToolsDir": true,
+    "targets": ["nsis"],
+    "resources": {
+      "../../dist/engine-windows-x64/church-cap-engine/": "engine/church-cap-engine/"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "headerImage": "installer/windows/header.bmp",
+        "sidebarImage": "installer/windows/sidebar.bmp",
+        "installerIcon": "installer/windows/installer-icon.ico",
+        "uninstallerIcon": "installer/windows/installer-icon.ico",
+        "uninstallerHeaderImage": "installer/windows/header.bmp",
+        "installerHooks": "installer/windows/installer-hooks.nsh",
+        "startMenuFolder": "Church Cap"
+      }
+    }
+  }
+}
